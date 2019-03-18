@@ -67,11 +67,19 @@ public class MysqlConnector {
             openConnection();
             Statement statement = connection.createStatement();
 
+            String locationsTableQuery = "CREATE TABLE IF NOT EXISTS locations (";
+            locationsTableQuery += "id INT NOT NULL,";
+            locationsTableQuery += "x INT NOT NULL,";
+            locationsTableQuery += "y INT NOT NULL,";
+            locationsTableQuery += "z INT NOT NULL,";
+            locationsTableQuery += "world TEXT NOT NULL";
+            locationsTableQuery += "PRIM"
+
             String regionsTableQuery = "CREATE TABLE IF NOT EXISTS regions (";
             regionsTableQuery += "id INT AUTO_INCREMENT,";
             regionsTableQuery += "owner VARCHAR(255) NOT NULL,";
             regionsTableQuery += "created_at DATE NOT NULL,";
-            regionsTableQuery += "priority INTEGER NOT NULL,";
+            regionsTableQuery += "priority INT NOT NULL,";
             regionsTableQuery += "name TEXT NOT NULL,";
             regionsTableQuery += "PRIMARY KEY (id)";
             statement.executeQuery(regionsTableQuery);
