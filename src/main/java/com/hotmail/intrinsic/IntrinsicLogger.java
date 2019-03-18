@@ -52,9 +52,7 @@ public class IntrinsicLogger {
     public static String getCurrentTimeUsingDate() {
 
         Date date = new Date();
-
-        //TODO TIME
-        String strDateFormat = "hh:mm:ss a";
+        String strDateFormat = "dd:MM:yy hh:mm:ss a";
 
         DateFormat dateFormat = new SimpleDateFormat(strDateFormat);
 

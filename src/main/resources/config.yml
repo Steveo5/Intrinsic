@@ -1,0 +1,9 @@
+log-file-size: 200000000
+
+storage:
+  mysql:
+    host: localhost
+    port: 3306
+    username: 'root'
+    password: ''
+    database: 'intrinsic'

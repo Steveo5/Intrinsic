@@ -30,6 +30,8 @@ public class RegionType {
         block.setItemMeta(im);
     }
 
+    public int getRadius() { return this.radius; }
+
     public ItemStack getBlock() {
         return this.block;
     }

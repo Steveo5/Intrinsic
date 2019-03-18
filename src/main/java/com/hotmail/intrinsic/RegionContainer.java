@@ -32,4 +32,28 @@ public class RegionContainer {
 
         return region;
     }
+
+    public List<Region> getIntersecting(Location location) {
+        return this.getIntersecting(location, this.regions);
+    }
+
+    public List<Region> getIntersecting(Location location, List<Region> list) {
+        List<Region> intersecting = new ArrayList<Region>();
+
+        for(Region region : list) {
+            Location bound1 = region.getBounds()[0];
+            Location bound2 = region.getBounds()[1];
+
+            // Check if the location is inside the region
+            if(location.getBlockX() >= bound1.getBlockX() && location.getBlockX() <= bound2.getBlockX()) {
+                if(location.getBlockY() >= bound1.getBlockY() && location.getBlockY() <= bound2.getBlockY()) {
+                    if(location.getBlockZ() >= bound1.getBlockZ() && location.getBlockZ() <= bound2.getBlockZ()) {
+                        intersecting.add(region);
+                    }
+                }
+            }
+        }
+
+        return intersecting;
+    }
 }

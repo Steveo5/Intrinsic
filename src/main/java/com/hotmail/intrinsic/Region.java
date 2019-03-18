@@ -7,11 +7,17 @@ public class Region {
     private RegionType type;
     private Location loc;
     private OfflinePlayer owner;
+    private Location[] bounds;
 
     protected Region(RegionType type, Location loc, OfflinePlayer owner) {
         this.type = type;
         this.loc = loc;
         this.owner = owner;
+
+        int r = type.getRadius();
+
+        bounds[0] = loc.clone().subtract(r, r, r);
+        bounds[1] = loc.clone().add(r, r, r);
     }
 
     public RegionType getType() {
@@ -29,4 +35,6 @@ public class Region {
     public String getDisplayName() {
         return type.getName().replace("-", " ");
     }
+
+    public Location[] getBounds() { return this.bounds; }
 }

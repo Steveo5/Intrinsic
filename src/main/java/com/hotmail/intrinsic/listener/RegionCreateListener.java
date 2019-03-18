@@ -14,6 +14,12 @@ import java.util.logging.Level;
 
 public class RegionCreateListener implements Listener {
 
+    private Intrinsic plugin;
+
+    public RegionCreateListener(Intrinsic plugin) {
+        this.plugin = plugin;
+    }
+
 
     @EventHandler
     public void onRegionCreate(BlockPlaceEvent evt) {
@@ -24,9 +30,8 @@ public class RegionCreateListener implements Listener {
             // Finally create our new region
             Region region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
             Location rLoc = region.getLocation();
-            p.sendMessage(ChatColor.GREEN + "This area is now protected");
-            Intrinsic.getIntrinsicLogger()
-                    .logFile(Level.INFO, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getBlockX() + " y:" + rLoc.getBlockY() + " z:" + rLoc.getBlockZ());
+            p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
+            plugin.getLogger().log(Level.ALL, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getBlockX() + " y:" + rLoc.getBlockY() + " z:" + rLoc.getBlockZ());
         }
     }
 
