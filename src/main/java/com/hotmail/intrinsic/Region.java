@@ -37,4 +37,12 @@ public class Region {
     }
 
     public Location[] getBounds() { return this.bounds; }
+
+    /**
+     * Unique id for this region
+     * @return
+     */
+    public String getId() {
+        return loc.getBlockX() + "" + loc.getBlockY() + "" + loc.getBlockZ() + "" + loc.getWorld().getUID().toString();
+    }
 }
