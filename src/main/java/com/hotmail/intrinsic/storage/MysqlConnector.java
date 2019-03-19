@@ -2,11 +2,9 @@ package com.hotmail.intrinsic.storage;
 
 import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
-import com.hotmail.intrinsic.RegionType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,20 +12,18 @@ import java.util.List;
 
 public class MysqlConnector {
 
-    private Connection connection;
-    private String host, database, username, password;
-    private int port;
+    private final ConnectionPoolManager pool;
+
     private Intrinsic plugin;
 
-    public MysqlConnector(Intrinsic plugin, String host, int port, String database, String username, String password) {
-        this.host = host;
-        this.port = port;
-        this.database = database + "?useSSL=false";
-        this.username = username;
-        this.password = password;
+    public MysqlConnector(Intrinsic plugin) {
         this.plugin = plugin;
-
+        pool = new ConnectionPoolManager(plugin);
         this.initialiseTables();
+    }
+
+    public void onDisable() {
+        pool.closePool();
     }
 
     public void saveRegion(Region region) {
@@ -59,8 +55,12 @@ public class MysqlConnector {
         // Insert our new region ASYNC
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 
+            Connection connection = null;
+            PreparedStatement insertRegionStatement = null;
+
             try {
-                openConnection();
+
+                connection = pool.getConnection();
 
                 String insertRegion = "INSERT INTO regions(id, owner, created_at, priority) " +
                         "VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE owner=?, priority=?";
@@ -69,7 +69,7 @@ public class MysqlConnector {
                 this.saveRegionType(id, typeName, radius, serializedItem);
 
                 /** Create the region **/
-                PreparedStatement insertRegionStatement = connection.prepareStatement(insertRegion);
+                insertRegionStatement = pool.getConnection().prepareStatement(insertRegion);
 
                 insertRegionStatement.setString(1, id);
                 insertRegionStatement.setString(2, owner);
@@ -81,16 +81,10 @@ public class MysqlConnector {
 
                 insertRegionStatement.execute();
 
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                pool.close(connection, insertRegionStatement, null);
             }
         });
     }
@@ -118,6 +112,8 @@ public class MysqlConnector {
                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, z=?, min_x=?, min_y=?, min_z=?, " +
                 "max_x=?, max_y=?, max_z=?, world=?;";
 
+        Connection connection = pool.getConnection();
+
         /** Create the location **/
         PreparedStatement insertLocationStatement = connection.prepareStatement(insertLocation);
         insertLocationStatement.setString(1, id);
@@ -144,6 +140,8 @@ public class MysqlConnector {
         insertLocationStatement.setString(21, world);
 
         insertLocationStatement.execute();
+
+        pool.close(connection, insertLocationStatement, null);
     }
 
     /**
@@ -154,7 +152,7 @@ public class MysqlConnector {
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    private void saveRegionType(String id, String name, int radius, String item) throws ClassNotFoundException, SQLException {
+    private void saveRegionType(String id, String name, int radius, String item) throws SQLException {
         String insertLocation = "INSERT INTO types(id, name, radius, block) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE" +
                 " name=?, radius=?, block=?";
 
@@ -162,6 +160,8 @@ public class MysqlConnector {
 /*        YamlConfiguration restoreConfig = new YamlConfiguration();
         restoreConfig.loadFromString(serialized);
         ItemStack restoredItem = restoreConfig.getItemStack("item");*/
+
+        Connection connection = pool.getConnection();
 
         /** Create the type **/
         PreparedStatement insertLocationStatement = connection.prepareStatement(insertLocation);
@@ -175,13 +175,17 @@ public class MysqlConnector {
         insertLocationStatement.setString(7, item);
 
         insertLocationStatement.execute();
+
+        pool.close(connection, insertLocationStatement, null);
     }
 
     public List<Region> getIntersecting(Location location) {
         List<Region> intersecting = new ArrayList<Region>();
 
+        Connection connection = null;
+
         try {
-            openConnection();
+            connection = pool.getConnection();
             Statement statement = connection.createStatement();
             String query = "SELECT * FROM locations ";
             query += "INNER JOIN locations ON regions.center_loc = locations.id";
@@ -191,42 +195,30 @@ public class MysqlConnector {
             while(rs.next()) {
 
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            pool.close(connection, null, null);
         }
 
         return intersecting;
     }
 
-    public void openConnection() throws SQLException, ClassNotFoundException {
-        if (connection != null && !connection.isClosed()) {
-            return;
-        }
-
-        synchronized (this) {
-            if (connection != null && !connection.isClosed()) {
-                return;
-            }
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://" + this.host+ ":" + this.port + "/" + this.database, this.username, this.password);
-        }
-    }
-
     public boolean testConnection() {
         try {
-            openConnection();
+            pool.getConnection();
             return true;
-        } catch (ClassNotFoundException e) { } catch (SQLException e) { }
+        } catch (SQLException e) { }
 
         return false;
     }
 
     public void initialiseTables() {
+        Connection connection = null;
+        Statement statement = null;
         try {
-            openConnection();
-            Statement statement = connection.createStatement();
+            connection = pool.getConnection();
+            statement = connection.createStatement();
             String locationsTableQuery = "CREATE TABLE IF NOT EXISTS locations (";
             locationsTableQuery += "id VARCHAR(255),";
             locationsTableQuery += "x INT NOT NULL,";
@@ -262,10 +254,10 @@ public class MysqlConnector {
             statement.execute(locationsTableQuery);
             statement.execute(typesTableQuery);
             statement.execute(regionsTableQuery);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            pool.close(connection, null, null);
         }
     }
 

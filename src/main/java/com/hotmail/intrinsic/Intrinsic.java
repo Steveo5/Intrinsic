@@ -33,11 +33,7 @@ public class Intrinsic extends JavaPlugin {
         this.saveDefaultConfig();
         cfg = this.getConfig();
         regionContainer = new RegionContainer();
-        storage = new MysqlConnector(cfg.getString("storage.mysql.host"),
-                cfg.getInt("storage.mysql.port"),
-                cfg.getString("storage.mysql.database"),
-                cfg.getString("storage.mysql.username"),
-                cfg.getString("storage.mysql.password"));
+        storage = new MysqlConnector(this);
 
         if(!storage.testConnection()) {
             getLogger().log(Level.SEVERE, "MySQL connection failed, plugin will shutdown and nothing is protected!");
@@ -55,6 +51,11 @@ public class Intrinsic extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onDisable() {
+        storage.onDisable();
     }
 
     public static List<RegionType> getRegionTypes() {
