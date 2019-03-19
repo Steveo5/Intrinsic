@@ -18,13 +18,19 @@ public class RegionType {
         this.radius = radius;
     }
 
-    protected void setDisplayName(String displayName) {
+    public RegionType(String name, ItemStack block, int radius) {
+        this.name = name;
+        this.block = block;
+        this.radius = radius;
+    }
+
+    public void setDisplayName(String displayName) {
         ItemMeta im = block.getItemMeta();
         im.setDisplayName(displayName);
         block.setItemMeta(im);
     }
 
-    protected void setLore(String[] lore) {
+    public void setLore(String[] lore) {
         ItemMeta im = block.getItemMeta();
         im.setLore(Arrays.asList(lore));
         block.setItemMeta(im);

@@ -9,7 +9,7 @@ public class Region {
     private OfflinePlayer owner;
     private Location[] bounds = new Location[2];
 
-    protected Region(RegionType type, Location loc, OfflinePlayer owner) {
+    public Region(RegionType type, Location loc, OfflinePlayer owner) {
         this.type = type;
         this.loc = loc;
         this.owner = owner;

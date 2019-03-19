@@ -5,6 +5,8 @@ import com.hotmail.intrinsic.Region;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -179,26 +181,60 @@ public class MysqlConnector {
         pool.close(connection, insertLocationStatement, null);
     }
 
-    public List<Region> getIntersecting(Location location) {
+    public List<Region> getIntersecting(Location location, Runnable callback) {
         List<Region> intersecting = new ArrayList<Region>();
-
         Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet rs = null;
 
         try {
             connection = pool.getConnection();
-            Statement statement = connection.createStatement();
-            String query = "SELECT * FROM locations ";
-            query += "INNER JOIN locations ON regions.center_loc = locations.id";
-            query += "INNER JOIN locations ON regions.min_loc = locations.id";
-            query += "INNER JOIN locations ON regions.max_loc = locations.id";
-            ResultSet rs = statement.executeQuery(query);
-            while(rs.next()) {
 
+            String query = "SELECT * FROM locations ";
+            query += "INNER JOIN regions ON locations.id = regions.id ";
+            query += "INNER JOIN types ON locations.id = types.id ";
+            query += "WHERE world LIKE ? AND ? > min_x AND ? < max_x AND ? > min_y AND ? < max_y AND ? > min_z AND ? < max_z;";
+
+            statement = connection.prepareStatement(query);
+            statement.setString(1, location.getWorld().getUID().toString());
+            statement.setInt(2, location.getBlockX());
+            statement.setInt(3, location.getBlockX());
+            statement.setInt(4, location.getBlockY());
+            statement.setInt(5, location.getBlockY());
+            statement.setInt(6, location.getBlockZ());
+            statement.setInt(7, location.getBlockZ());
+
+            rs = statement.executeQuery();
+
+            if(rs.next()) {
+                do {
+                    System.out.println(rs.getString(1));
+                    System.out.println(rs.getString(2));
+                    System.out.println(rs.getString(3));
+                    System.out.println(rs.getString(4));
+                    System.out.println(rs.getString(5));
+                    System.out.println(rs.getString(6));
+                    System.out.println(rs.getString(7));
+                    System.out.println(rs.getString(8));
+                    System.out.println(rs.getString(9));
+                    System.out.println(rs.getString(10));
+                    System.out.println(rs.getString(11));
+                    System.out.println(rs.getString(12));
+                    System.out.println(rs.getString(13));
+                    System.out.println(rs.getString(14));
+                    System.out.println(rs.getString(15));
+                    System.out.println(rs.getString(16));
+                    System.out.println(rs.getString(17));
+                    System.out.println(rs.getString(18));
+                    System.out.println(rs.getString(19));
+
+                } while (rs.next());
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            pool.close(connection, null, null);
+            pool.close(connection, statement, rs);
         }
 
         return intersecting;
@@ -245,11 +281,7 @@ public class MysqlConnector {
             regionsTableQuery += "owner VARCHAR(255) NOT NULL,";
             regionsTableQuery += "created_at DATETIME NOT NULL,";
             regionsTableQuery += "priority INT NOT NULL,";
-            regionsTableQuery += "radius INT NOT NULL,";
-            regionsTableQuery += "location_id VARCHAR(255) NOT NULL,";
-            regionsTableQuery += "name VARCHAR(255) NOT NULL,";
-            regionsTableQuery += "PRIMARY KEY (id),";
-            regionsTableQuery += "FOREIGN KEY (location_id) REFERENCES locations(id));";
+            regionsTableQuery += "PRIMARY KEY (id));";
 
             statement.execute(locationsTableQuery);
             statement.execute(typesTableQuery);

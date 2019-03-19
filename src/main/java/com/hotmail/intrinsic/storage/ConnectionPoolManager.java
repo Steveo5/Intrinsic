@@ -36,7 +36,7 @@ public class ConnectionPoolManager {
     private void init() {
         this.hostname = plugin.getConfig().getString("storage.mysql.host");
         this.port = plugin.getConfig().getInt("storage.mysql.port");
-        this.database = plugin.getConfig().getString("storage.mysql.database");
+        this.database = plugin.getConfig().getString("storage.mysql.database") + "?useSSL=false";
         this.username = plugin.getConfig().getString("storage.mysql.username");
         this.password = plugin.getConfig().getString("storage.mysql.password");
 
