@@ -33,7 +33,7 @@ public class RegionCreateListener implements Listener {
             RegionType regionType = Intrinsic.getRegionType(evt.getItemInHand());
 
             // Finally create our new region
-            Region region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getChunk(), p);
+            Region region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
             Chunk rLoc = region.getCenter();
             p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
             plugin.getLogger().log(Level.ALL, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getX() + " z:" + rLoc.getZ());
@@ -46,7 +46,9 @@ public class RegionCreateListener implements Listener {
             Intrinsic.getStorage().getIntersecting(evt.getClickedBlock().getChunk(), new IntersectingCallback() {
                 @Override
                 public void run() {
-
+                    for(Region r : this.regions) {
+                        evt.getPlayer().sendMessage("Region found at " + r.getLocation().toString());
+                    }
                 }
             });
         }

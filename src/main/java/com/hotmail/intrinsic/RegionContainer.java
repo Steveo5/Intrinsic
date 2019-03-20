@@ -25,7 +25,7 @@ public class RegionContainer {
         return this.regions;
     }
 
-    public Region createRegion(RegionType type, Chunk loc, Player owner) {
+    public Region createRegion(RegionType type, Location loc, Player owner) {
         OfflinePlayer p = Bukkit.getOfflinePlayer(owner.getUniqueId());
         Region region = new Region(type, loc, p, 0);
         this.addRegion(region);

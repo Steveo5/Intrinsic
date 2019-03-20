@@ -6,14 +6,16 @@ import org.bukkit.OfflinePlayer;
 
 public class Region {
     private RegionType type;
+    private Location loc;
     private Chunk center;
     private OfflinePlayer owner;
     private Chunk[] bounds = new Chunk[2];
     private int priority;
 
-    public Region(RegionType type, Chunk center, OfflinePlayer owner, int priority) {
+    public Region(RegionType type, Location loc, OfflinePlayer owner, int priority) {
         this.type = type;
-        this.center = center;
+        this.loc = loc;
+        this.center = loc.getChunk();
         this.owner = owner;
         this.priority = priority;
 
@@ -41,11 +43,13 @@ public class Region {
 
     public int getPriority() { return this.priority; }
 
+    public Location getLocation() { return this.loc; }
+
     /**
      * Unique id for this region
      * @return
      */
     public String getId() {
-        return center.getX() + "" + center.getZ() + "" + center.getWorld().getUID().toString();
+        return loc.getBlockX() + "" + loc.getBlockY() + "" +  loc.getBlockZ() + "" + center.getWorld().getUID().toString();
     }
 }

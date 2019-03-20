@@ -3,14 +3,15 @@ package com.hotmail.intrinsic.storage;
 import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
 import com.hotmail.intrinsic.RegionType;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class MysqlConnector {
@@ -40,15 +41,16 @@ public class MysqlConnector {
         final String currentTime = sdf.format(dt);
         final int priority = 1, radius = region.getType().getRadius();
 
-        Chunk center = region.getCenter();
+        Location loc = region.getLocation();
 
-        final int x = center.getX(),
-                z = center.getZ(),
-                minX = region.getBounds()[0].getX(),
-                minZ = region.getBounds()[0].getZ(),
-                maxX = region.getBounds()[1].getX(),
-                maxZ = region.getBounds()[1].getZ();
-        final String world = center.getWorld().getUID().toString();
+        final int x = loc.getBlockX();
+        final int y = loc.getBlockX();
+        final int z = loc.getBlockZ();
+        final int minX = region.getBounds()[0].getX();
+        final int minZ = region.getBounds()[0].getZ();
+        final int maxX = region.getBounds()[1].getX();
+        final int maxZ = region.getBounds()[1].getZ();
+        final String world = loc.getWorld().getUID().toString();
 
         // Serialise the item
         YamlConfiguration itemConfig = new YamlConfiguration();
@@ -70,7 +72,7 @@ public class MysqlConnector {
                 String insertRegion = "INSERT INTO regions(id, owner, created_at, priority) " +
                         "VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE owner=?, priority=?";
 
-                this.saveRegionLocation(x, z, minX, minZ, maxX, maxZ, world);
+                this.saveRegionLocation(id, x, y, z, minX, minZ, maxX, maxZ, world);
                 this.saveRegionType(id, typeName, radius, serializedItem);
 
                 /** Create the region **/
@@ -100,7 +102,9 @@ public class MysqlConnector {
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    private void saveRegionLocation(int x,
+    private void saveRegionLocation(String id,
+                                    int x,
+                                    int y,
                                     int z,
                                     int minX,
                                     int minZ,
@@ -108,9 +112,8 @@ public class MysqlConnector {
                                     int maxZ,
                                     String world
     ) throws SQLException {
-        String insertLocation = "INSERT INTO locations(id, x, z, min_x, min_z, max_z, max_z owner, world) " +
+        String insertLocation = "INSERT INTO chunks(id, x, y, z, min_x, min_z, max_x, max_z, world) " +
                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);";
-        String id = x + "" + z + "" + world;
 
         Connection connection = pool.getConnection();
 
@@ -118,12 +121,13 @@ public class MysqlConnector {
         PreparedStatement insertLocationStatement = connection.prepareStatement(insertLocation);
         insertLocationStatement.setString(1, id);
         insertLocationStatement.setString(2, String.valueOf(x));
-        insertLocationStatement.setString(3, String.valueOf(z));
-        insertLocationStatement.setString(4, String.valueOf(minX));
-        insertLocationStatement.setString(5, String.valueOf(minZ));
-        insertLocationStatement.setString(6, String.valueOf(maxX));
-        insertLocationStatement.setString(7, String.valueOf(maxZ));
-        insertLocationStatement.setString(8, world);
+        insertLocationStatement.setString(3, String.valueOf(y));
+        insertLocationStatement.setString(4, String.valueOf(z));
+        insertLocationStatement.setString(5, String.valueOf(minX));
+        insertLocationStatement.setString(6, String.valueOf(minZ));
+        insertLocationStatement.setString(7, String.valueOf(maxX));
+        insertLocationStatement.setString(8, String.valueOf(maxZ));
+        insertLocationStatement.setString(9, world);
 
         insertLocationStatement.execute();
 
@@ -186,8 +190,8 @@ public class MysqlConnector {
 
                 String query = "SELECT * FROM chunks ";
                 query += "INNER JOIN regions ON chunks.id = regions.id ";
-                query += "INNER JOIN types ON locations.id = types.id ";
-                query += "WHERE world LIKE ? AND ? > min_x AND ? < max_x AND ? > min_z AND ? < max_z;";
+                query += "INNER JOIN types ON chunks.id = types.id ";
+                query += "WHERE world LIKE ? AND ? >= min_x AND ? <= max_x AND ? >= min_z AND ? <= max_z;";
 
                 statement = connection.prepareStatement(query);
                 statement.setString(1, world);
@@ -196,13 +200,13 @@ public class MysqlConnector {
                 statement.setInt(4, z);
                 statement.setInt(5, z);
 
+                System.out.println(statement.toString());
+
                 final ResultSet results = statement.executeQuery();
 
                 this.getIntersecting(results, callback);
 
             } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (InvalidConfigurationException e) {
                 e.printStackTrace();
             } finally {
                 pool.close(connection, statement, rs);
@@ -217,42 +221,73 @@ public class MysqlConnector {
      * @throws SQLException
      * @throws InvalidConfigurationException
      */
-    private void getIntersecting(ResultSet results, IntersectingCallback callback) throws SQLException, InvalidConfigurationException {
+    private void getIntersecting(ResultSet results, IntersectingCallback callback) throws SQLException {
+
+        List<HashMap<String, String>> regionStringList = new ArrayList<>();
+
         while(results.next()) {
 
-            final boolean last = results.last();
+            HashMap<String, String> values = new HashMap<>();
 
-            final String chunkId = results.getString(1);
-            final int centerX = results.getInt(2), centerZ = results.getInt(3);
-            final String chunkWorld = results.getString(4);
-            // Skip ID as chunkId is the same
-            final String owner = results.getString(6);
-            final String createdAt = results.getString(7);
-            final int priority = results.getInt(8);
-            // Skip ID as typeId is the same
-            final String typeName = results.getString(10);
-            final int radius = results.getInt(11);
+            values.put("chunkId", results.getString(1));
+            values.put("centerX", results.getString(2));
+            values.put("centerY", results.getString(3));
+            values.put("centerZ", results.getString(4));
+            values.put("chunkWorld", results.getString(9));
+            values.put("owner", results.getString(11));
+            values.put("createdAt", results.getString(12));
+            values.put("priority", results.getString(13));
+            values.put("typeName", results.getString(15));
+            values.put("radius", results.getString(16));
+            values.put("typeItem", results.getString(17));
 
-            // Deserialize the RegionType item
-            YamlConfiguration restoreConfig = new YamlConfiguration();
-            restoreConfig.loadFromString(results.getString(12));
-            final ItemStack typeItem = restoreConfig.getItemStack("item");
-
-            // Assemble our Bukkit stuff back in the main thread
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                Chunk center = Bukkit.getWorld(UUID.fromString(chunkWorld)).getChunkAt(centerX, centerZ);
-                OfflinePlayer offlineOwner = Bukkit.getOfflinePlayer(UUID.fromString(owner));
-
-                RegionType regionType = new RegionType(typeName, typeItem, radius);
-
-                // Finally make our region
-                Region region = new Region(regionType, center, offlineOwner, priority);
-                callback.regions.add(region);
-
-                if(last) callback.run();
-            });
+            regionStringList.add(values);
 
         }
+
+
+        // Assemble our Bukkit stuff back in the main thread
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for(HashMap<String, String> regionStrings : regionStringList) {
+                try {
+                    callback.regions.add(getRegionFromHashmap(regionStrings));
+                } catch (InvalidConfigurationException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            callback.run();
+        });
+
+    }
+
+    /**
+     * Get a region from a list of hashmap strings, values supplied must match the required
+     * values of a region such as radius, typeItem etc
+     * @param map
+     * @return
+     * @throws InvalidConfigurationException
+     */
+    private Region getRegionFromHashmap(HashMap<String, String> map) throws InvalidConfigurationException {
+        World w = Bukkit.getWorld(UUID.fromString(map.get("chunkWorld")));
+        int x = Integer.valueOf(map.get("centerX"));
+        int y = Integer.valueOf(map.get("centerY"));
+        int z = Integer.valueOf(map.get("centerZ"));
+        Location loc = new Location(w, x, y, z);
+        OfflinePlayer offlineOwner = Bukkit.getOfflinePlayer(UUID.fromString(map.get("owner")));
+
+        // Deserialize the RegionType item
+        YamlConfiguration restoreConfig = new YamlConfiguration();
+        restoreConfig.loadFromString(map.get("typeItem"));
+        final ItemStack typeItem = restoreConfig.getItemStack("item");
+
+        RegionType regionType = new RegionType(map.get("typeName"), typeItem, Integer.valueOf(map.get("radius")));
+
+        // Finally make our region
+        Region region = new Region(regionType, loc, offlineOwner, Integer.valueOf(map.get("priority")));
+
+        return region;
+
     }
 
     public boolean testConnection() {
@@ -273,7 +308,12 @@ public class MysqlConnector {
             String locationsTableQuery = "CREATE TABLE IF NOT EXISTS chunks (";
             locationsTableQuery += "id VARCHAR(255),";
             locationsTableQuery += "x INT NOT NULL,";
+            locationsTableQuery += "y INT NOT NULL,";
             locationsTableQuery += "z INT NOT NULL,";
+            locationsTableQuery += "min_x INT NOT NULL,";
+            locationsTableQuery += "min_z INT NOT NULL,";
+            locationsTableQuery += "max_x INT NOT NULL,";
+            locationsTableQuery += "max_z INT NOT NULL,";
             locationsTableQuery += "world TEXT NOT NULL,";
             locationsTableQuery += "PRIMARY KEY (id));";
 
