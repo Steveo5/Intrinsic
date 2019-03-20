@@ -1,6 +1,7 @@
 package com.hotmail.intrinsic;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -16,7 +17,7 @@ public class RegionContainer {
         this.regions = new ArrayList<Region>();
     }
 
-    public void addLoadedRegion(Region region) {
+    public void addRegion(Region region) {
         this.regions.add(region);
     }
 
@@ -24,10 +25,10 @@ public class RegionContainer {
         return this.regions;
     }
 
-    public Region createRegion(RegionType type, Location loc, Player owner) {
+    public Region createRegion(RegionType type, Chunk loc, Player owner) {
         OfflinePlayer p = Bukkit.getOfflinePlayer(owner.getUniqueId());
-        Region region = new Region(type, loc, p);
-        this.addLoadedRegion(region);
+        Region region = new Region(type, loc, p, 0);
+        this.addRegion(region);
 
         Intrinsic.getStorage().saveRegion(region);
 
@@ -41,19 +42,6 @@ public class RegionContainer {
     public List<Region> getIntersecting(Location location, List<Region> list) {
         List<Region> intersecting = new ArrayList<Region>();
 
-        for(Region region : list) {
-            Location bound1 = region.getBounds()[0];
-            Location bound2 = region.getBounds()[1];
-
-            // Check if the location is inside the region
-            if(location.getBlockX() >= bound1.getBlockX() && location.getBlockX() <= bound2.getBlockX()) {
-                if(location.getBlockY() >= bound1.getBlockY() && location.getBlockY() <= bound2.getBlockY()) {
-                    if(location.getBlockZ() >= bound1.getBlockZ() && location.getBlockZ() <= bound2.getBlockZ()) {
-                        intersecting.add(region);
-                    }
-                }
-            }
-        }
 
         return intersecting;
     }

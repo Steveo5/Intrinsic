@@ -2,15 +2,16 @@ package com.hotmail.intrinsic.storage;
 
 import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
+import com.hotmail.intrinsic.RegionType;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.Chunk;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.inventory.ItemStack;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 public class MysqlConnector {
 
@@ -39,13 +40,15 @@ public class MysqlConnector {
         final String currentTime = sdf.format(dt);
         final int priority = 1, radius = region.getType().getRadius();
 
-        // Region location, min and max bounds
-        Location loc = region.getLocation(), min = region.getBounds()[0], max = region.getBounds()[1];
+        Chunk center = region.getCenter();
 
-        final int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
-        final int minX = min.getBlockX(), minY = min.getBlockY(), minZ = min.getBlockZ();
-        final int maxX = max.getBlockX(), maxY = max.getBlockY(), maxZ = max.getBlockZ();
-        final String world = loc.getWorld().getUID().toString();
+        final int x = center.getX(),
+                z = center.getZ(),
+                minX = region.getBounds()[0].getX(),
+                minZ = region.getBounds()[0].getZ(),
+                maxX = region.getBounds()[1].getX(),
+                maxZ = region.getBounds()[1].getZ();
+        final String world = center.getWorld().getUID().toString();
 
         // Serialise the item
         YamlConfiguration itemConfig = new YamlConfiguration();
@@ -67,7 +70,7 @@ public class MysqlConnector {
                 String insertRegion = "INSERT INTO regions(id, owner, created_at, priority) " +
                         "VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE owner=?, priority=?";
 
-                this.saveRegionLocation(id, x, y, z, minX, minY, minZ, maxX, maxY, maxZ, world);
+                this.saveRegionLocation(x, z, minX, minZ, maxX, maxZ, world);
                 this.saveRegionType(id, typeName, radius, serializedItem);
 
                 /** Create the region **/
@@ -92,27 +95,22 @@ public class MysqlConnector {
     }
 
     /**
-     * Save a regions locations to database, this includes
-     * center location, min and max locations
-     * @param id
+     * Save a regions chunk to database, this includes
+     * center only
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    private void saveRegionLocation(String id,
-                                    int x,
-                                    int y,
+    private void saveRegionLocation(int x,
                                     int z,
                                     int minX,
-                                    int minY,
                                     int minZ,
                                     int maxX,
-                                    int maxY,
                                     int maxZ,
                                     String world
     ) throws SQLException {
-        String insertLocation = "INSERT INTO locations(id, x, y, z, min_x, min_y, min_z, max_x, max_y, max_z, world) " +
-                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, z=?, min_x=?, min_y=?, min_z=?, " +
-                "max_x=?, max_y=?, max_z=?, world=?;";
+        String insertLocation = "INSERT INTO locations(id, x, z, min_x, min_z, max_z, max_z owner, world) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);";
+        String id = x + "" + z + "" + world;
 
         Connection connection = pool.getConnection();
 
@@ -120,26 +118,12 @@ public class MysqlConnector {
         PreparedStatement insertLocationStatement = connection.prepareStatement(insertLocation);
         insertLocationStatement.setString(1, id);
         insertLocationStatement.setString(2, String.valueOf(x));
-        insertLocationStatement.setString(3, String.valueOf(y));
-        insertLocationStatement.setString(4, String.valueOf(z));
-        insertLocationStatement.setString(5, String.valueOf(minX));
-        insertLocationStatement.setString(6, String.valueOf(minY));
-        insertLocationStatement.setString(7, String.valueOf(minZ));
-        insertLocationStatement.setString(8, String.valueOf(maxX));
-        insertLocationStatement.setString(9, String.valueOf(maxY));
-        insertLocationStatement.setString(10, String.valueOf(maxZ));
-        insertLocationStatement.setString(11, world);
-        // Duplicate keys
-        insertLocationStatement.setString(12, String.valueOf(x));
-        insertLocationStatement.setString(13, String.valueOf(y));
-        insertLocationStatement.setString(14, String.valueOf(z));
-        insertLocationStatement.setString(15, String.valueOf(minX));
-        insertLocationStatement.setString(16, String.valueOf(minY));
-        insertLocationStatement.setString(17, String.valueOf(minZ));
-        insertLocationStatement.setString(18, String.valueOf(maxX));
-        insertLocationStatement.setString(19, String.valueOf(maxY));
-        insertLocationStatement.setString(20, String.valueOf(maxZ));
-        insertLocationStatement.setString(21, world);
+        insertLocationStatement.setString(3, String.valueOf(z));
+        insertLocationStatement.setString(4, String.valueOf(minX));
+        insertLocationStatement.setString(5, String.valueOf(minZ));
+        insertLocationStatement.setString(6, String.valueOf(maxX));
+        insertLocationStatement.setString(7, String.valueOf(maxZ));
+        insertLocationStatement.setString(8, world);
 
         insertLocationStatement.execute();
 
@@ -181,63 +165,94 @@ public class MysqlConnector {
         pool.close(connection, insertLocationStatement, null);
     }
 
-    public List<Region> getIntersecting(Location location, Runnable callback) {
-        List<Region> intersecting = new ArrayList<Region>();
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet rs = null;
+    /**
+     * Get regions intersecting a chunk and populate a callback ASync
+     * @param chunk
+     * @param callback
+     */
+    public void getIntersecting(Chunk chunk, IntersectingCallback callback) {
 
-        try {
-            connection = pool.getConnection();
+        int x = chunk.getX(), z = chunk.getZ();
+        String world = chunk.getWorld().getUID().toString();
 
-            String query = "SELECT * FROM locations ";
-            query += "INNER JOIN regions ON locations.id = regions.id ";
-            query += "INNER JOIN types ON locations.id = types.id ";
-            query += "WHERE world LIKE ? AND ? > min_x AND ? < max_x AND ? > min_y AND ? < max_y AND ? > min_z AND ? < max_z;";
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 
-            statement = connection.prepareStatement(query);
-            statement.setString(1, location.getWorld().getUID().toString());
-            statement.setInt(2, location.getBlockX());
-            statement.setInt(3, location.getBlockX());
-            statement.setInt(4, location.getBlockY());
-            statement.setInt(5, location.getBlockY());
-            statement.setInt(6, location.getBlockZ());
-            statement.setInt(7, location.getBlockZ());
+            Connection connection = null;
+            PreparedStatement statement = null;
+            ResultSet rs = null;
 
-            rs = statement.executeQuery();
+            try {
+                connection = pool.getConnection();
 
-            if(rs.next()) {
-                do {
-                    System.out.println(rs.getString(1));
-                    System.out.println(rs.getString(2));
-                    System.out.println(rs.getString(3));
-                    System.out.println(rs.getString(4));
-                    System.out.println(rs.getString(5));
-                    System.out.println(rs.getString(6));
-                    System.out.println(rs.getString(7));
-                    System.out.println(rs.getString(8));
-                    System.out.println(rs.getString(9));
-                    System.out.println(rs.getString(10));
-                    System.out.println(rs.getString(11));
-                    System.out.println(rs.getString(12));
-                    System.out.println(rs.getString(13));
-                    System.out.println(rs.getString(14));
-                    System.out.println(rs.getString(15));
-                    System.out.println(rs.getString(16));
-                    System.out.println(rs.getString(17));
-                    System.out.println(rs.getString(18));
-                    System.out.println(rs.getString(19));
+                String query = "SELECT * FROM chunks ";
+                query += "INNER JOIN regions ON chunks.id = regions.id ";
+                query += "INNER JOIN types ON locations.id = types.id ";
+                query += "WHERE world LIKE ? AND ? > min_x AND ? < max_x AND ? > min_z AND ? < max_z;";
 
-                } while (rs.next());
+                statement = connection.prepareStatement(query);
+                statement.setString(1, world);
+                statement.setInt(2, x);
+                statement.setInt(3, x);
+                statement.setInt(4, z);
+                statement.setInt(5, z);
+
+                final ResultSet results = statement.executeQuery();
+
+                this.getIntersecting(results, callback);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (InvalidConfigurationException e) {
+                e.printStackTrace();
+            } finally {
+                pool.close(connection, statement, rs);
             }
+        });
+    }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            pool.close(connection, statement, rs);
+    /**
+     * Get intersecting regions and populate a callback based on a result set
+     * @param results
+     * @param callback
+     * @throws SQLException
+     * @throws InvalidConfigurationException
+     */
+    private void getIntersecting(ResultSet results, IntersectingCallback callback) throws SQLException, InvalidConfigurationException {
+        while(results.next()) {
+
+            final boolean last = results.last();
+
+            final String chunkId = results.getString(1);
+            final int centerX = results.getInt(2), centerZ = results.getInt(3);
+            final String chunkWorld = results.getString(4);
+            // Skip ID as chunkId is the same
+            final String owner = results.getString(6);
+            final String createdAt = results.getString(7);
+            final int priority = results.getInt(8);
+            // Skip ID as typeId is the same
+            final String typeName = results.getString(10);
+            final int radius = results.getInt(11);
+
+            // Deserialize the RegionType item
+            YamlConfiguration restoreConfig = new YamlConfiguration();
+            restoreConfig.loadFromString(results.getString(12));
+            final ItemStack typeItem = restoreConfig.getItemStack("item");
+
+            // Assemble our Bukkit stuff back in the main thread
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Chunk center = Bukkit.getWorld(UUID.fromString(chunkWorld)).getChunkAt(centerX, centerZ);
+                OfflinePlayer offlineOwner = Bukkit.getOfflinePlayer(UUID.fromString(owner));
+
+                RegionType regionType = new RegionType(typeName, typeItem, radius);
+
+                // Finally make our region
+                Region region = new Region(regionType, center, offlineOwner, priority);
+                callback.regions.add(region);
+
+                if(last) callback.run();
+            });
+
         }
-
-        return intersecting;
     }
 
     public boolean testConnection() {
@@ -255,17 +270,10 @@ public class MysqlConnector {
         try {
             connection = pool.getConnection();
             statement = connection.createStatement();
-            String locationsTableQuery = "CREATE TABLE IF NOT EXISTS locations (";
+            String locationsTableQuery = "CREATE TABLE IF NOT EXISTS chunks (";
             locationsTableQuery += "id VARCHAR(255),";
             locationsTableQuery += "x INT NOT NULL,";
-            locationsTableQuery += "y INT NOT NULL,";
             locationsTableQuery += "z INT NOT NULL,";
-            locationsTableQuery += "min_x INT NOT NULL,";
-            locationsTableQuery += "min_y INT NOT NULL,";
-            locationsTableQuery += "min_z INT NOT NULL,";
-            locationsTableQuery += "max_x INT NOT NULL,";
-            locationsTableQuery += "max_y INT NOT NULL,";
-            locationsTableQuery += "max_z INT NOT NULL,";
             locationsTableQuery += "world TEXT NOT NULL,";
             locationsTableQuery += "PRIMARY KEY (id));";
 

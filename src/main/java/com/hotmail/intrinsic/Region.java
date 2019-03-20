@@ -1,31 +1,32 @@
 package com.hotmail.intrinsic;
 
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
 public class Region {
     private RegionType type;
-    private Location loc;
+    private Chunk center;
     private OfflinePlayer owner;
-    private Location[] bounds = new Location[2];
+    private Chunk[] bounds = new Chunk[2];
+    private int priority;
 
-    public Region(RegionType type, Location loc, OfflinePlayer owner) {
+    public Region(RegionType type, Chunk center, OfflinePlayer owner, int priority) {
         this.type = type;
-        this.loc = loc;
+        this.center = center;
         this.owner = owner;
+        this.priority = priority;
 
-        int r = type.getRadius();
-
-        bounds[0] = loc.clone().subtract(r, r, r);
-        bounds[1] = loc.clone().add(r, r, r);
+        bounds[0] = center.getWorld().getChunkAt(center.getX() - type.getRadius(), center.getZ() - type.getRadius());
+        bounds[1] = center.getWorld().getChunkAt(center.getX() + type.getRadius(), center.getZ() + type.getRadius());
     }
 
     public RegionType getType() {
         return this.type;
     }
 
-    public Location getLocation() {
-        return this.loc;
+    public Chunk getCenter() {
+        return this.center;
     }
 
     public OfflinePlayer getOwner() {
@@ -36,13 +37,15 @@ public class Region {
         return type.getName().replace("-", " ");
     }
 
-    public Location[] getBounds() { return this.bounds; }
+    public Chunk[] getBounds() { return this.bounds; }
+
+    public int getPriority() { return this.priority; }
 
     /**
      * Unique id for this region
      * @return
      */
     public String getId() {
-        return loc.getBlockX() + "" + loc.getBlockY() + "" + loc.getBlockZ() + "" + loc.getWorld().getUID().toString();
+        return center.getX() + "" + center.getZ() + "" + center.getWorld().getUID().toString();
     }
 }

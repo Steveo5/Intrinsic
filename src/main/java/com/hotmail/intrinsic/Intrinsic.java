@@ -41,7 +41,7 @@ public class Intrinsic extends JavaPlugin {
             getLogger().log(Level.INFO, "MySQL Connection succeeded!");
         }
 
-        RegionType small = new RegionType("small-protection", Material.STONE, 5);
+        RegionType small = new RegionType("small-protection", Material.STONE, 0);
         regionTypes.add(small);
 
         getPluginManager().registerEvents(new RegionCreateListener(this), this);

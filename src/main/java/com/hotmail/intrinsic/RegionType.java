@@ -24,18 +24,6 @@ public class RegionType {
         this.radius = radius;
     }
 
-    public void setDisplayName(String displayName) {
-        ItemMeta im = block.getItemMeta();
-        im.setDisplayName(displayName);
-        block.setItemMeta(im);
-    }
-
-    public void setLore(String[] lore) {
-        ItemMeta im = block.getItemMeta();
-        im.setLore(Arrays.asList(lore));
-        block.setItemMeta(im);
-    }
-
     public int getRadius() { return this.radius; }
 
     public ItemStack getBlock() {
