@@ -44,7 +44,7 @@ public class MysqlConnector {
         Location loc = region.getLocation();
 
         final int x = loc.getBlockX();
-        final int y = loc.getBlockX();
+        final int y = loc.getBlockY();
         final int z = loc.getBlockZ();
         final int minX = region.getBounds()[0].getX();
         final int minZ = region.getBounds()[0].getZ();
@@ -200,8 +200,6 @@ public class MysqlConnector {
                 statement.setInt(4, z);
                 statement.setInt(5, z);
 
-                System.out.println(statement.toString());
-
                 final ResultSet results = statement.executeQuery();
 
                 this.getIntersecting(results, callback);
@@ -284,10 +282,69 @@ public class MysqlConnector {
         RegionType regionType = new RegionType(map.get("typeName"), typeItem, Integer.valueOf(map.get("radius")));
 
         // Finally make our region
-        Region region = new Region(regionType, loc, offlineOwner, Integer.valueOf(map.get("priority")));
+        return new Region(regionType, loc, offlineOwner, Integer.valueOf(map.get("priority")));
 
-        return region;
+    }
 
+    /**
+     * Remove a region from the database
+     * @param r
+     */
+    public void destroyRegion(Region r) {
+        String id = r.getId();
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+
+            String deleteRegionQuery = "DELETE FROM regions WHERE id=?;";
+
+            Connection connection = null;
+            PreparedStatement statement = null;
+
+            try {
+                this.destroyChunk(id);
+                this.destroyTypes(id);
+
+                connection = pool.getConnection();
+                statement = connection.prepareStatement(deleteRegionQuery);
+                statement.setString(1, id);
+                statement.execute();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                pool.close(connection, statement, null);
+            }
+        });
+    }
+
+    /**
+     * Delete a chunk by id
+     * @param id
+     */
+    private void destroyChunk(String id) throws SQLException {
+        String deleteChunkQuery = "DELETE FROM chunks WHERE id=?";
+
+        Connection connection = pool.getConnection();
+        PreparedStatement statement = connection.prepareStatement(deleteChunkQuery);
+
+        statement.setString(1, id);
+        statement.execute();
+        pool.close(connection, statement, null);
+    }
+
+    /**
+     * Destroy region types by id
+     * @param id
+     */
+    private void destroyTypes(String id) throws SQLException {
+        String deleteTypesQuery = "DELETE FROM types WHERE id=?";
+
+        Connection connection = pool.getConnection();
+        PreparedStatement statement = connection.prepareStatement(deleteTypesQuery);
+
+        statement.setString(1, id);
+        statement.execute();
+        pool.close(connection, statement, null);
     }
 
     public boolean testConnection() {

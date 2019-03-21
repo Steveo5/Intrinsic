@@ -1,6 +1,8 @@
 package com.hotmail.intrinsic;
 
 import com.hotmail.intrinsic.listener.RegionCreateListener;
+import com.hotmail.intrinsic.listener.RegionDestroyListener;
+import com.hotmail.intrinsic.listener.RegionLoadListener;
 import com.hotmail.intrinsic.storage.MysqlConnector;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -45,6 +47,8 @@ public class Intrinsic extends JavaPlugin {
         regionTypes.add(small);
 
         getPluginManager().registerEvents(new RegionCreateListener(this), this);
+        getPluginManager().registerEvents(new RegionLoadListener(), this);
+        getPluginManager().registerEvents(new RegionDestroyListener(), this);
 
         try {
             setupLogger();

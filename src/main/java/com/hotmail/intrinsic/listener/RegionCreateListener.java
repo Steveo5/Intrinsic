@@ -43,14 +43,9 @@ public class RegionCreateListener implements Listener {
     @EventHandler
     public void onRightClickBlock(PlayerInteractEvent evt) {
         if(evt.getHand() == EquipmentSlot.HAND && evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            Intrinsic.getStorage().getIntersecting(evt.getClickedBlock().getChunk(), new IntersectingCallback() {
-                @Override
-                public void run() {
-                    for(Region r : this.regions) {
-                        evt.getPlayer().sendMessage("Region found at " + r.getLocation().toString());
-                    }
-                }
-            });
+            for(Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk())) {
+                System.out.println(r.toString() + " found");
+            }
         }
     }
 }
