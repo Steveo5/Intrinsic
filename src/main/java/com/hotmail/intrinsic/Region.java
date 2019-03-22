@@ -6,6 +6,7 @@ import org.bukkit.block.Block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Region {
     private RegionType type;
@@ -15,6 +16,7 @@ public class Region {
     private Chunk[] bounds = new Chunk[2];
     private int priority;
     private List<Block> borderBlocks;
+    private List<UUID> whitelist;
 
     private long visualizingTimeFor, visualizingTimeLeft;
 
@@ -41,6 +43,12 @@ public class Region {
     public OfflinePlayer getOwner() {
         return this.owner;
     }
+
+    public boolean isOwner(UUID uuid) { return uuid.equals(owner); }
+
+    public List<UUID> getWhitelist() { return this.whitelist; }
+
+    public boolean isWhitelisted(UUID uuid) { return this.whitelist.contains(uuid); }
 
     public String getDisplayName() {
         return type.getName().replace("-", " ");
@@ -129,4 +137,13 @@ public class Region {
     public void setPriority(int priority) {
         this.priority = priority;
     }
+
+    /**
+     * Unload a region
+     * @return false if the region is already unloaded
+     */
+    public boolean unload() {
+        return Intrinsic.getRegionContainer().unloadRegion(this);
+    }
+
 }

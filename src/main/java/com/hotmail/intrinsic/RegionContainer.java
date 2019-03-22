@@ -53,8 +53,13 @@ public class RegionContainer {
         for (Region r : regions) loadRegion(r);
     }
 
-    public void unloadRegion(Region region) {
-        this.regions.remove(region);
+    public boolean unloadRegion(Region region) {
+        if(this.regions.containsKey(region.getId())) {
+            this.regions.remove(region.getId());
+            return true;
+        }
+
+        return false;
     }
 
     public Collection<Region> getLoadedRegions() {
@@ -74,7 +79,11 @@ public class RegionContainer {
 
         OfflinePlayer p = Bukkit.getOfflinePlayer(owner.getUniqueId());
 
-        Region region = new Region(type, loc, p, 0);
+        // Get the highest priority region and make this region higher priority
+        Region highest = Intrinsic.getRegionContainer().getIntersecting(loc.getChunk(), 0).highestPriority();
+        int highestPriority = highest == null ? 1 : highest.getPriority() + 1;
+
+        Region region = new Region(type, loc, p, highestPriority);
 
         // Create the event here
         RegionCreateEvent event = new RegionCreateEvent(region);
@@ -90,6 +99,15 @@ public class RegionContainer {
         Intrinsic.getStorage().saveRegion(region);
 
         return region;
+    }
+
+    /**
+     * Unload and destroy a region
+     * @param region
+     */
+    public void destroyRegion(Region region) {
+        region.unload();
+        Intrinsic.getStorage().destroyRegion(region);
     }
 
     public RegionSet getIntersecting(Chunk chunk, int radius) {

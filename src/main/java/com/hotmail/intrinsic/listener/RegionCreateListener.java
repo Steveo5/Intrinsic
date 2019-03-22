@@ -30,38 +30,32 @@ public class RegionCreateListener implements Listener {
 
     @EventHandler
     public void onRegionCreate(BlockPlaceEvent evt) {
-        if(Intrinsic.hasRegionType(evt.getItemInHand())) {
-            Player p = evt.getPlayer();
-            RegionType regionType = Intrinsic.getRegionType(evt.getItemInHand());
+        if(!Intrinsic.hasRegionType(evt.getItemInHand())) return;
 
-            // Finally create our new region
-            Region region = null;
-            try {
-                region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
-            } catch (RegionLoadException e) {
-            } catch (EventException e) {
-                return;
-            }
+        Player p = evt.getPlayer();
+        RegionType regionType = Intrinsic.getRegionType(evt.getItemInHand());
 
-            if(region == null) {
-                evt.setCancelled(true);
-                return;
-            }
+        Region region = null;
 
-            Chunk rLoc = region.getCenter();
-            p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
-            plugin.getLogger().log(Level.ALL, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getX() + " z:" + rLoc.getZ());
-
+        // Finally create our new region
+        try {
+            region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
+        } catch (Exception e) {
+            return;
         }
+
+        Chunk rLoc = region.getCenter();
+        p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
+        plugin.getLogger().log(Level.ALL, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getX() + " z:" + rLoc.getZ());
     }
 
     @EventHandler
     public void onRightClickBlock(PlayerInteractEvent evt) {
-        if(evt.getHand() == EquipmentSlot.HAND && evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            for(Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk())) {
-                System.out.println(r.toString() + " found");
-                r.visualize();
-            }
+        if(evt.getHand() != EquipmentSlot.HAND && evt.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        for(Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk(), 0).all()) {
+            System.out.println(r.toString() + " found");
+            r.visualize();
         }
     }
 }

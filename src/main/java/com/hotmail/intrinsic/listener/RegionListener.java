@@ -1,11 +1,8 @@
 package com.hotmail.intrinsic.listener;
 
-import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -55,7 +52,6 @@ public class RegionListener implements Listener {
     public void onPlayerMoveRegion(PlayerMoveEvent evt) {
         Chunk from = evt.getFrom().getChunk();
         Chunk to = evt.getTo().getChunk();
-
 
     }
 

@@ -1,5 +1,7 @@
 package com.hotmail.intrinsic;
 
+import org.bukkit.entity.Player;
+
 import java.util.*;
 
 public class RegionSet {
@@ -27,6 +29,11 @@ public class RegionSet {
      */
     public void load() {
         Intrinsic.getRegionContainer().loadRegions(all());
+    }
+
+    public boolean hasPermission(UUID uuid) {
+        Region highest = highestPriority();
+        return highest != null && (highest.isOwner(uuid) || highest.isWhitelisted(uuid));
     }
 
 }
