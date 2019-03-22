@@ -22,4 +22,11 @@ public class RegionSet {
         return this.regionSet.lastEntry().getValue();
     }
 
+    /**
+     * Load all of the regions in this region set
+     */
+    public void load() {
+        Intrinsic.getRegionContainer().loadRegions(all());
+    }
+
 }

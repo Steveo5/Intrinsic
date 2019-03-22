@@ -44,6 +44,15 @@ public class RegionContainer {
         return true;
     }
 
+    /**
+     * Load all regions in a list, ignoring those that return false
+     * or fail to load
+     * @param regions
+     */
+    public void loadRegions(Collection<Region> regions) {
+        for (Region r : regions) loadRegion(r);
+    }
+
     public void unloadRegion(Region region) {
         this.regions.remove(region);
     }
@@ -88,11 +97,11 @@ public class RegionContainer {
 
         for(Region r : this.getLoadedRegions()) {
             Chunk min = r.getBounds()[0], max = r.getBounds()[1];
+            int minX = min.getX(), maxX = max.getX(), minZ = min.getZ(), maxZ = max.getZ();
 
-            if(chunk.getX() >= min.getX() && chunk.getX() <= max.getX() &&
-                    chunk.getZ() >= min.getZ() && chunk.getZ() <= max.getZ()) {
-                rs.put(r.getPriority(), r);
-            }
+            // Check if the chunk is within the loop regions min max bounds
+            if(chunk.getX() >= minX && chunk.getX() <= maxX && chunk.getZ() >= minZ && chunk.getZ() <= maxZ) continue;
+            rs.put(r.getPriority(), r);
         }
 
         return rs;

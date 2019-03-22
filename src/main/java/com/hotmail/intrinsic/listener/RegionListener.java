@@ -56,17 +56,7 @@ public class RegionListener implements Listener {
         Chunk from = evt.getFrom().getChunk();
         Chunk to = evt.getTo().getChunk();
 
-        if(from.getX() != to.getX() || from.getZ() != to.getZ()) {
-            Collection<Region> regionsTo = Intrinsic.getRegionContainer().getIntersecting(to);
-            if(regionsTo.size() > 0) {
-                this.onPlayerEnterRegions(evt, regionsTo);
-            } else {
-                dCollection<Region> regionsFrom = Intrinsic.getRegionContainer().getIntersecting(from);
-                if(regionsFrom.size() > 0) {
-                    this.onPlayerLeaveRegions(evt, regionsFrom);
-                }
-            }
-        }
+
     }
 
     public void onPlayerEnterRegions(PlayerMoveEvent evt, Collection<Region> regions) {
