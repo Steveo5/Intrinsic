@@ -2,6 +2,7 @@ package com.hotmail.intrinsic;
 
 import com.hotmail.intrinsic.listener.RegionCreateListener;
 import com.hotmail.intrinsic.listener.RegionDestroyListener;
+import com.hotmail.intrinsic.listener.RegionListener;
 import com.hotmail.intrinsic.listener.RegionLoadListener;
 import com.hotmail.intrinsic.storage.MysqlConnector;
 import org.bukkit.Bukkit;
@@ -29,13 +30,17 @@ public class Intrinsic extends JavaPlugin {
     private static Logger logger;
     private static RegionContainer regionContainer;
     private static MysqlConnector storage;
+    private static Intrinsic plugin;
+    private static Visualizer visualizer;
 
     @Override
     public void onEnable() {
+        plugin = this;
         this.saveDefaultConfig();
         cfg = this.getConfig();
         regionContainer = new RegionContainer();
         storage = new MysqlConnector(this);
+        visualizer = new Visualizer(this);
 
         if(!storage.testConnection()) {
             getLogger().log(Level.SEVERE, "MySQL connection failed, plugin will shutdown and nothing is protected!");
@@ -43,12 +48,13 @@ public class Intrinsic extends JavaPlugin {
             getLogger().log(Level.INFO, "MySQL Connection succeeded!");
         }
 
-        RegionType small = new RegionType("small-protection", Material.STONE, 0);
+        RegionType small = new RegionType("small-protection", Material.WHITE_BANNER, 0);
         regionTypes.add(small);
 
         getPluginManager().registerEvents(new RegionCreateListener(this), this);
         getPluginManager().registerEvents(new RegionLoadListener(), this);
         getPluginManager().registerEvents(new RegionDestroyListener(), this);
+        getPluginManager().registerEvents(new RegionListener(), this);
 
         try {
             setupLogger();
@@ -129,6 +135,14 @@ public class Intrinsic extends JavaPlugin {
         SimpleFormatter fmt = new SimpleFormatter();
         fh.setFormatter(fmt);
 
+    }
+
+    public static Visualizer getVisualizer() {
+        return visualizer;
+    }
+
+    public static FileConfiguration getIntrinsicConfig() {
+        return cfg;
     }
 
 }

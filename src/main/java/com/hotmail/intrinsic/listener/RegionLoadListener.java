@@ -61,14 +61,9 @@ public class RegionLoadListener implements Listener {
         Intrinsic.getStorage().getIntersecting(chunk, new IntersectingCallback() {
             @Override
             public void run() {
-                for(Region r : this.regions) {
-                    if(Intrinsic.getRegionContainer().loadRegion(r)) {
-                        System.out.println("Loading region " + r.getLocation().toString());
-                        System.out.println("Loaded chunks " + Intrinsic.getRegionContainer().getLoadedRegions().size());
-                    } else {
-                        System.out.println("Region " + r.getLocation().toString() + " failed to load, already loaded!");
-                    }
-                }
+            for(Region r : this.regions) {
+                Intrinsic.getRegionContainer().loadRegion(r);
+            }
             }
         });
     }

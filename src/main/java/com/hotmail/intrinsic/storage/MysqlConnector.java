@@ -39,7 +39,8 @@ public class MysqlConnector {
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         final String currentTime = sdf.format(dt);
-        final int priority = 1, radius = region.getType().getRadius();
+        final int priority = region.getPriority();
+        int radius = region.getType().getRadius();
 
         Location loc = region.getLocation();
 

@@ -1,12 +1,15 @@
 package com.hotmail.intrinsic;
 
+import com.hotmail.intrinsic.event.RegionCreateEvent;
+import com.hotmail.intrinsic.event.RegionLoadEvent;
+import com.hotmail.intrinsic.exception.RegionLoadException;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventException;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,11 +25,21 @@ public class RegionContainer {
     /**
      * Load a region into the region container
      * @param region
-     * @return true if loaded or false if the region is already loaded
+     * @return true if loaded or false if the region is already loaded or
+     * the event is canelled
      */
     public boolean loadRegion(Region region) {
         if(this.regions.containsKey(region.getId())) return false;
-        this.regions.put(region.getId(), region);
+
+        // Create the event here
+        RegionLoadEvent event = new RegionLoadEvent(region);
+        // Call the event
+        Bukkit.getServer().getPluginManager().callEvent(event);
+        // Check if the event is not cancelled
+        if (!event.isCancelled())  {
+            this.regions.put(region.getId(), region);
+            return false;
+        }
 
         return true;
     }
@@ -39,34 +52,50 @@ public class RegionContainer {
         return this.regions.values();
     }
 
-    public Region createRegion(RegionType type, Location loc, Player owner) {
+    /**
+     * Create a new region at a specific location, will throw an exception if the
+     * region create event is cancelled, failed to load region or failed to save
+     * region to database
+     * @param type
+     * @param loc
+     * @param owner
+     * @return
+     */
+    public Region createRegion(RegionType type, Location loc, Player owner) throws RegionLoadException, EventException {
+
         OfflinePlayer p = Bukkit.getOfflinePlayer(owner.getUniqueId());
+
         Region region = new Region(type, loc, p, 0);
-        this.loadRegion(region);
+
+        // Create the event here
+        RegionCreateEvent event = new RegionCreateEvent(region);
+        // Call the event
+        Bukkit.getServer().getPluginManager().callEvent(event);
+        // Check if the event is not cancelled
+        if (event.isCancelled()) throw new EventException("The event was cancelled");
+
+        if(!this.loadRegion(region)) {
+            throw new RegionLoadException("The region is already loaded");
+        }
 
         Intrinsic.getStorage().saveRegion(region);
 
         return region;
     }
 
-    public List<Region> getIntersecting(Chunk chunk) {
-        return this.getIntersecting(chunk, this.getLoadedRegions());
-    }
+    public RegionSet getIntersecting(Chunk chunk, int radius) {
+        RegionSet rs = new RegionSet();
 
-    public List<Region> getIntersecting(Chunk chunk, Collection<Region> list) {
-        List<Region> intersecting = new ArrayList<Region>();
-
-        // Check the bounds
         for(Region r : this.getLoadedRegions()) {
-            Chunk[] bounds = r.getBounds();
-            if(bounds[0].getX() >= chunk.getX() && bounds[0].getX() <= chunk.getX()) {
-                if(bounds[0].getZ() >= chunk.getZ() && bounds[0].getZ() <= chunk.getZ()) {
-                    intersecting.add(r);
-                }
+            Chunk min = r.getBounds()[0], max = r.getBounds()[1];
+
+            if(chunk.getX() >= min.getX() && chunk.getX() <= max.getX() &&
+                    chunk.getZ() >= min.getZ() && chunk.getZ() <= max.getZ()) {
+                rs.put(r.getPriority(), r);
             }
         }
 
-        return intersecting;
+        return rs;
     }
 
     /**

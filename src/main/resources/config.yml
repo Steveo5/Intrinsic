@@ -1,5 +1,8 @@
 log-file-size: 200000000
 
+visualization:
+  time: 1000
+
 storage:
   mysql:
     host: localhost
