@@ -259,7 +259,7 @@ public class MysqlConnector {
             for(HashMap<String, String> regionStrings : regionStringList) {
                 try {
                     Region region = getRegionFromHashmap(regionStrings);
-                    callback.rs.put(region.getPriority(), region);
+                    callback.rs.add(region);
                 } catch (InvalidConfigurationException e) {
                     e.printStackTrace();
                 }

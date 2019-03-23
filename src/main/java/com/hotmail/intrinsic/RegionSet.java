@@ -6,22 +6,22 @@ import java.util.*;
 
 public class RegionSet {
 
-    private NavigableMap<Integer, Region> regionSet = new TreeMap<>();
+    private List<Region> regionSet = new ArrayList<>();
 
     public RegionSet() {}
 
-    public void put(int priority, Region region) {
-        regionSet.put(priority, region);
+    public void add(Region region) {
+        regionSet.add(region);
     }
 
-    public Collection<Region> all() {
-        if(regionSet.isEmpty()) return new ArrayList<>();
-        return regionSet.values();
+    public List<Region> all() {
+        regionSet.sort(Comparator.comparing(Region::getPriority));
+        return regionSet;
     }
 
     public Region highestPriority() {
         if(regionSet.isEmpty()) return null;
-        return this.regionSet.lastEntry().getValue();
+        return this.regionSet.get(this.regionSet.size() - 1);
     }
 
     /**

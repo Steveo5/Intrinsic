@@ -114,7 +114,7 @@ public class RegionContainer {
             // Current iterator chunk bounds
             int minX = min.getX(), maxX = max.getX(), minZ = min.getZ(), maxZ = max.getZ();
             // Check if the chunk is within the loop regions min max bounds
-            if(x >= minX && x <= maxX && z >= minZ && z <= maxZ) rs.put(r.getPriority(), r);
+            if(x >= minX && x <= maxX && z >= minZ && z <= maxZ) rs.add(r);
         }
 
         return rs;

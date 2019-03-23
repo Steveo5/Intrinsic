@@ -6,6 +6,7 @@ import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Visualizer {
@@ -20,16 +21,19 @@ public class Visualizer {
         public void run() {
             if(visualizing.size() <= 0) return;
 
-            for(Region r : visualizing) {
-                r.setVisualizingTimeLeft(r.getVisualizingTimeLeft() - timerInterval);
+            Iterator<Region> regionItr = visualizing.iterator();
+
+            while(regionItr.hasNext()) {
+                Region next = regionItr.next();
+                next.setVisualizingTimeLeft(next.getVisualizingTimeLeft() - timerInterval);
+
+                showOnce(next);
 
                 // Reset the time for, visualization time and remove the region from visualizing
-                if(r.getVisualizingTimeLeft() <= 0) {
-                    r.resetVisualizingTime();
-                    visualizing.remove(r);
-                }
+                if(next.getVisualizingTimeLeft() > 0) continue;
 
-                showOnce(r);
+                next.resetVisualizingTime();
+                regionItr.remove();
             }
         }
     }
