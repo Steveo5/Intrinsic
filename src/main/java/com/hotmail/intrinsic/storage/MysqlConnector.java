@@ -175,9 +175,12 @@ public class MysqlConnector {
      * @param chunk
      * @param callback
      */
-    public void getIntersecting(Chunk chunk, IntersectingCallback callback) {
+    public void getIntersecting(Chunk chunk, int radius, IntersectingCallback callback) {
 
         int x = chunk.getX(), z = chunk.getZ();
+        int minX = x - radius, maxX = x + radius;
+        int minZ = z - radius, maxZ = z + radius;
+
         String world = chunk.getWorld().getUID().toString();
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -192,14 +195,20 @@ public class MysqlConnector {
                 String query = "SELECT * FROM chunks ";
                 query += "INNER JOIN regions ON chunks.id = regions.id ";
                 query += "INNER JOIN types ON chunks.id = types.id ";
-                query += "WHERE world LIKE ? AND ? >= min_x AND ? <= max_x AND ? >= min_z AND ? <= max_z;";
+                query += "WHERE (world LIKE ? AND ? >= min_x AND ? <= max_x AND ? >= min_z AND ? <= max_z) ";
+                query += "OR (world LIKE ? AND min_x >= ? AND max_x <= ? AND min_Z >= ? AND max_z <= ?);";
 
                 statement = connection.prepareStatement(query);
                 statement.setString(1, world);
-                statement.setInt(2, x);
-                statement.setInt(3, x);
-                statement.setInt(4, z);
-                statement.setInt(5, z);
+                statement.setInt(2, minX);
+                statement.setInt(3, maxX);
+                statement.setInt(4, minZ);
+                statement.setInt(5, maxZ);
+                statement.setString(6, world);
+                statement.setInt(7, minX);
+                statement.setInt(8, maxX);
+                statement.setInt(9, minZ);
+                statement.setInt(10, maxZ);
 
                 final ResultSet results = statement.executeQuery();
 
@@ -249,7 +258,8 @@ public class MysqlConnector {
         Bukkit.getScheduler().runTask(plugin, () -> {
             for(HashMap<String, String> regionStrings : regionStringList) {
                 try {
-                    callback.regions.add(getRegionFromHashmap(regionStrings));
+                    Region region = getRegionFromHashmap(regionStrings);
+                    callback.rs.put(region.getPriority(), region);
                 } catch (InvalidConfigurationException e) {
                     e.printStackTrace();
                 }

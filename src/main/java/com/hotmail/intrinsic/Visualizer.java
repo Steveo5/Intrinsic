@@ -12,7 +12,7 @@ public class Visualizer {
 
     private Intrinsic plugin;
     private List<Region> visualizing;
-    private long timerInterval = 1000L;
+    private long timerInterval = 15L;
 
     class VisualizerTask implements Runnable {
 
@@ -36,9 +36,9 @@ public class Visualizer {
 
     public Visualizer(Intrinsic plugin) {
         this.plugin = plugin;
-        this.visualizing = new ArrayList<Region>();
+        this.visualizing = new ArrayList<>();
 
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new VisualizerTask(), 10000L, timerInterval);
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new VisualizerTask(), 20L * 10, timerInterval);
     }
     /**
      * Visualize a regions border for a specific amount of time
@@ -58,8 +58,10 @@ public class Visualizer {
      * @param region
      */
     public void showOnce(Region region) {
+        Particle.DustOptions dustOptions = new Particle.DustOptions(Color.RED, 1);
         for(Block b : region.getBorderBlocks()) {
-            region.getLocation().getWorld().spawnParticle(Particle.REDSTONE, b.getLocation(), 5);
+            int x = b.getX(), y = b.getY() + 1, z = b.getZ();
+            region.getLocation().getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 0, dustOptions);
         }
     }
 

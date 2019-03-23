@@ -35,14 +35,10 @@ public class RegionCreateListener implements Listener {
         Player p = evt.getPlayer();
         RegionType regionType = Intrinsic.getRegionType(evt.getItemInHand());
 
-        Region region = null;
-
         // Finally create our new region
-        try {
-            region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
-        } catch (Exception e) {
-            return;
-        }
+        Region region = Intrinsic.getRegionContainer().createRegion(regionType, evt.getBlock().getLocation(), p);
+
+        if(region == null) return;
 
         Chunk rLoc = region.getCenter();
         p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
@@ -51,11 +47,14 @@ public class RegionCreateListener implements Listener {
 
     @EventHandler
     public void onRightClickBlock(PlayerInteractEvent evt) {
-        if(evt.getHand() != EquipmentSlot.HAND && evt.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if(evt.getHand() == EquipmentSlot.HAND && evt.getAction() == Action.LEFT_CLICK_BLOCK) {
 
-        for(Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk(), 0).all()) {
-            System.out.println(r.toString() + " found");
-            r.visualize();
+            for (Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk()).all()) {
+                evt.getPlayer().sendMessage("You have clicked a region at " + r.getLocation().toString());
+                r.visualize();
+
+                evt.setCancelled(true);
+            }
         }
     }
 }

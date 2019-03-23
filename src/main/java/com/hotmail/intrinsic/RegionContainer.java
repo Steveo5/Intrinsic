@@ -3,6 +3,7 @@ package com.hotmail.intrinsic;
 import com.hotmail.intrinsic.event.RegionCreateEvent;
 import com.hotmail.intrinsic.event.RegionLoadEvent;
 import com.hotmail.intrinsic.exception.RegionLoadException;
+import com.hotmail.intrinsic.util.CuboidUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -10,10 +11,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventException;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 public class RegionContainer {
     private HashMap<String, Region> regions;
@@ -38,10 +37,10 @@ public class RegionContainer {
         // Check if the event is not cancelled
         if (!event.isCancelled())  {
             this.regions.put(region.getId(), region);
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -54,12 +53,10 @@ public class RegionContainer {
     }
 
     public boolean unloadRegion(Region region) {
-        if(this.regions.containsKey(region.getId())) {
-            this.regions.remove(region.getId());
-            return true;
-        }
+        if(!this.regions.containsKey(region.getId())) return false;
+        this.regions.remove(region.getId());
 
-        return false;
+        return true;
     }
 
     public Collection<Region> getLoadedRegions() {
@@ -75,12 +72,12 @@ public class RegionContainer {
      * @param owner
      * @return
      */
-    public Region createRegion(RegionType type, Location loc, Player owner) throws RegionLoadException, EventException {
+    public Region createRegion(RegionType type, Location loc, Player owner) {
 
         OfflinePlayer p = Bukkit.getOfflinePlayer(owner.getUniqueId());
 
         // Get the highest priority region and make this region higher priority
-        Region highest = Intrinsic.getRegionContainer().getIntersecting(loc.getChunk(), 0).highestPriority();
+        Region highest = Intrinsic.getRegionContainer().getIntersecting(loc.getChunk()).highestPriority();
         int highestPriority = highest == null ? 1 : highest.getPriority() + 1;
 
         Region region = new Region(type, loc, p, highestPriority);
@@ -90,11 +87,9 @@ public class RegionContainer {
         // Call the event
         Bukkit.getServer().getPluginManager().callEvent(event);
         // Check if the event is not cancelled
-        if (event.isCancelled()) throw new EventException("The event was cancelled");
+        if (event.isCancelled()) return null;
 
-        if(!this.loadRegion(region)) {
-            throw new RegionLoadException("The region is already loaded");
-        }
+        this.loadRegion(region);
 
         Intrinsic.getStorage().saveRegion(region);
 
@@ -110,16 +105,16 @@ public class RegionContainer {
         Intrinsic.getStorage().destroyRegion(region);
     }
 
-    public RegionSet getIntersecting(Chunk chunk, int radius) {
+    public RegionSet getIntersecting(Chunk chunk) {
         RegionSet rs = new RegionSet();
+        int x = chunk.getX(), z = chunk.getZ();
 
         for(Region r : this.getLoadedRegions()) {
             Chunk min = r.getBounds()[0], max = r.getBounds()[1];
+            // Current iterator chunk bounds
             int minX = min.getX(), maxX = max.getX(), minZ = min.getZ(), maxZ = max.getZ();
-
             // Check if the chunk is within the loop regions min max bounds
-            if(chunk.getX() >= minX && chunk.getX() <= maxX && chunk.getZ() >= minZ && chunk.getZ() <= maxZ) continue;
-            rs.put(r.getPriority(), r);
+            if(x >= minX && x <= maxX && z >= minZ && z <= maxZ) rs.put(r.getPriority(), r);
         }
 
         return rs;
@@ -131,9 +126,7 @@ public class RegionContainer {
      * @return null if no region found
      */
     public Region getRegionAt(Location location) {
-        for(Region r : this.getLoadedRegions()) {
-            if(r.getLocation().equals(location)) return r;
-        }
+        for(Region r : this.getLoadedRegions()) if(r.getLocation().equals(location)) return r;
 
         return null;
     }

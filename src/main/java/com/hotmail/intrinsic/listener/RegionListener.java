@@ -36,7 +36,6 @@ public class RegionListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent evt) {
         if(evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if(evt.getClickedBlock().getType() == Material.CHEST ||
-                    evt.getClickedBlock().getType() == Material.CHEST_MINECART ||
                     evt.getClickedBlock().getType() == Material.ENDER_CHEST ||
                     evt.getClickedBlock().getType() == Material.ENDER_CHEST) {
                 this.onPlayerInteractChest(evt);

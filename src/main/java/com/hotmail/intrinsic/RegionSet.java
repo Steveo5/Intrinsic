@@ -8,9 +8,9 @@ public class RegionSet {
 
     private NavigableMap<Integer, Region> regionSet = new TreeMap<>();
 
-    protected RegionSet() {}
+    public RegionSet() {}
 
-    protected void put(int priority, Region region) {
+    public void put(int priority, Region region) {
         regionSet.put(priority, region);
     }
 
@@ -28,7 +28,12 @@ public class RegionSet {
      * Load all of the regions in this region set
      */
     public void load() {
-        Intrinsic.getRegionContainer().loadRegions(all());
+        //Intrinsic.getRegionContainer().loadRegions(all());
+        for(Region r : all()) {
+            if(Intrinsic.getRegionContainer().loadRegion(r)) {
+                System.out.println("Region loaded " + r.getLocation().toString());
+            }
+        }
     }
 
     public boolean hasPermission(UUID uuid) {

@@ -43,20 +43,21 @@ public class BlockUtil {
         World w = min.getWorld();
         int minX = min.getBlockX();
         int maxX = max.getBlockX();
-        int minY = min.getBlockY();
-        int maxY = max.getBlockY();
         int minZ = min.getBlockZ();
         int maxZ = max.getBlockZ();
 
-        for(int x = minX; x <= maxX; x++) {
-            for(int y = minY; y <= maxY; y++) {
-                for(int z = minZ; z <= maxZ; z++) {
-                    if(x == minX || x == maxX || y == minY || y == maxX || z == minZ || z == maxZ) {
-                        Block highest = w.getHighestBlockAt(x, z);
-                        blocks.add(highest);
-                    }
-                }
-            }
+        for (int x = minX; x <= maxX; x++) {
+            blocks.add(w.getHighestBlockAt(x, minZ));
+            blocks.add(w.getHighestBlockAt(x, maxZ));
+            blocks.add(w.getHighestBlockAt(x, minZ));
+            blocks.add(w.getHighestBlockAt(x, maxZ));
+        }
+
+        for (int z = minZ; z <= maxZ; z++) {
+            blocks.add(w.getHighestBlockAt(minX, z));
+            blocks.add(w.getHighestBlockAt(minX, z));
+            blocks.add(w.getHighestBlockAt(maxX, z));
+            blocks.add(w.getHighestBlockAt(maxX, z));
         }
 
         return blocks;

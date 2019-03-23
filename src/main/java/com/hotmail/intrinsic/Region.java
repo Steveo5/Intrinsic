@@ -126,7 +126,7 @@ public class Region {
         if(borderBlocks.size() < 1) {
             World w = this.getLocation().getWorld();
             Location min = this.getBounds()[0].getBlock(0, 0, 0).getLocation();
-            Location max = this.getBounds()[1].getBlock(16, 0, 16).getLocation();
+            Location max = this.getBounds()[1].getBlock(15, 0, 15).getLocation();
 
             this.borderBlocks = BlockUtil.getBorderBlocks(min, max);
         }

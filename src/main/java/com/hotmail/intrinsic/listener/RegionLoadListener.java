@@ -1,6 +1,7 @@
 package com.hotmail.intrinsic.listener;
 
 import com.hotmail.intrinsic.Intrinsic;
+import com.hotmail.intrinsic.storage.IntersectingCallback;
 import org.bukkit.Chunk;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,7 +16,12 @@ public class RegionLoadListener implements Listener {
         Chunk c = evt.getPlayer().getLocation().getChunk();
 
         // Try and load any regions found in a radius around the player
-        Intrinsic.getRegionContainer().getIntersecting(c, 1).load();
+        Intrinsic.getStorage().getIntersecting(c, 1, new IntersectingCallback() {
+            @Override
+            public void run() {
+                rs.load();
+            }
+        });
     }
 
     @EventHandler
@@ -30,7 +36,12 @@ public class RegionLoadListener implements Listener {
         Chunk to = evt.getTo().getChunk();
 
         // Try and load any regions found in a radius around the player
-        Intrinsic.getRegionContainer().getIntersecting(to, 1).load();
+        Intrinsic.getStorage().getIntersecting(to, 1, new IntersectingCallback() {
+            @Override
+            public void run() {
+                rs.load();
+            }
+        });
     }
 
 }
