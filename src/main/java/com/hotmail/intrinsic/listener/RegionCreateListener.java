@@ -47,14 +47,14 @@ public class RegionCreateListener implements Listener {
 
     @EventHandler
     public void onRightClickBlock(PlayerInteractEvent evt) {
-        if(evt.getHand() == EquipmentSlot.HAND && evt.getAction() == Action.LEFT_CLICK_BLOCK) {
+        if(evt.getHand() != EquipmentSlot.HAND && evt.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
-            for (Region r : Intrinsic.getRegionContainer().getIntersecting(evt.getClickedBlock().getChunk()).all()) {
-                evt.getPlayer().sendMessage("You have clicked a region at " + r.getLocation().toString());
-                r.visualize();
+        Region region = Intrinsic.getRegionContainer().getRegionAt(evt.getClickedBlock().getLocation());
 
-                evt.setCancelled(true);
-            }
-        }
+        if(region == null) return;
+
+        evt.getPlayer().sendMessage("You have clicked a region at " + region.getLocation().toString());
+        region.visualize();
+        evt.setCancelled(true);
     }
 }
