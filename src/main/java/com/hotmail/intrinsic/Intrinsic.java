@@ -4,9 +4,9 @@ import com.hotmail.intrinsic.listener.RegionCreateListener;
 import com.hotmail.intrinsic.listener.RegionDestroyListener;
 import com.hotmail.intrinsic.listener.RegionListener;
 import com.hotmail.intrinsic.listener.RegionLoadListener;
+import com.hotmail.intrinsic.menubuilder.MenuBuilder;
 import com.hotmail.intrinsic.menubuilder.MenuBuilderListener;
 import com.hotmail.intrinsic.storage.MysqlConnector;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.*;
 import java.util.zip.GZIPOutputStream;
@@ -26,17 +27,16 @@ import static org.bukkit.Bukkit.getPluginManager;
 
 public class Intrinsic extends JavaPlugin {
 
-    private static List<RegionType> regionTypes = new ArrayList<RegionType>();
+    private static List<RegionType> regionTypes = new ArrayList<>();
     private static FileConfiguration cfg;
-    private static Logger logger;
     private static RegionContainer regionContainer;
     private static MysqlConnector storage;
-    private static Intrinsic plugin;
     private static Visualizer visualizer;
+
+    private static HashMap<String, MenuBuilder> menus = new HashMap<>();
 
     @Override
     public void onEnable() {
-        plugin = this;
         this.saveDefaultConfig();
         cfg = this.getConfig();
         regionContainer = new RegionContainer();
@@ -63,6 +63,8 @@ public class Intrinsic extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        loadMenu(new MainMenu("main-menu"));
     }
 
     @Override
@@ -76,11 +78,12 @@ public class Intrinsic extends JavaPlugin {
 
     /**
      * Check if there is a RegionType that matches an ItemStack
-     * @param item
+     * @param item to check if the ItemStack of both are similar meaning
+     * the block the player is about to place is matching this region type block
      * @return false if not found
      */
     public static boolean hasRegionType(ItemStack item) {
-        for(RegionType regionType : regionTypes) {
+        for(RegionType regionType : getRegionTypes()) {
             if(regionType.getBlock().isSimilar(item)) return true;
         }
 
@@ -145,6 +148,14 @@ public class Intrinsic extends JavaPlugin {
 
     public static FileConfiguration getIntrinsicConfig() {
         return cfg;
+    }
+
+    public static void loadMenu(MenuBuilder menu) {
+        menus.put(menu.getName(), menu);
+    }
+
+    public static HashMap<String, MenuBuilder> getMenus() {
+        return menus;
     }
 
 }

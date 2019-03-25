@@ -1,7 +1,5 @@
 package com.hotmail.intrinsic;
 
-import org.bukkit.entity.Player;
-
 import java.util.*;
 
 public class RegionSet {

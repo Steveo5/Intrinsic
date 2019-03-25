@@ -12,11 +12,10 @@ import java.util.Iterator;
 
 public class MenuBuilderListener implements Listener {
 
-    private static HashSet<MenuBuilder> menus;
+    private static final HashSet<MenuBuilder> menus = new HashSet<>();
 
     public MenuBuilderListener(Plugin plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        menus = new HashSet<>();
     }
 
     @EventHandler
@@ -54,27 +53,21 @@ public class MenuBuilderListener implements Listener {
 
     @EventHandler
     public void onMessage(AsyncPlayerChatEvent evt) {
-        Iterator<MenuBuilder> invItr = menus.iterator();
-        // Loop over all the menus we know of
-        while(invItr.hasNext()) {
-            MenuBuilder next = invItr.next();
+        synchronized (menus) {
             // Check if any button is waiting input
-            for(Button btn : next.getButtons()) {
-                if(btn.hasListener()) {
-                    for(ButtonListener listener : btn.getListeners()) {
-                        if(listener instanceof InputListener) {
-                            InputListener inputListener = (InputListener) listener;
-                            // Check the button is waiting for our event player
-                            if (inputListener.isWaiting() && inputListener.waiting().getUniqueId().equals(evt.getPlayer().getUniqueId())) {
-                                // Call the event for the button
-                                inputListener.onInput(evt.getPlayer(), evt.getMessage());
-                                // Stop waiting for input on the button
-                                inputListener.stopWaiting(evt.getPlayer());
-                                evt.setCancelled(true);
-                            }
-                        }
-                    }
-                }
+            for(ButtonListener buttonListener : MenuBuilder.getAllInputListeners()) {
+                if (!(buttonListener instanceof InputListener)) continue;
+                InputListener inputListener = (InputListener) buttonListener;
+
+                // Check the button is waiting for our event player
+                if (!inputListener.isWaiting() && !inputListener.waiting().getUniqueId().equals(evt.getPlayer().getUniqueId())) continue;
+
+                // Call the event for the button
+                inputListener.onInput(evt.getPlayer(), evt.getMessage());
+                // Stop waiting for input on the button
+                inputListener.stopWaiting(evt.getPlayer());
+
+                evt.setCancelled(true);
             }
         }
     }
@@ -85,6 +78,10 @@ public class MenuBuilderListener implements Listener {
      */
     public static void listen(MenuBuilder menu) {
         menus.add(menu);
+    }
+
+    public static HashSet<MenuBuilder> getMenus() {
+        return menus;
     }
 
 }

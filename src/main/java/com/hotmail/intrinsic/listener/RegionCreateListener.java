@@ -44,17 +44,4 @@ public class RegionCreateListener implements Listener {
         p.sendMessage(ChatColor.GREEN + "This area is now protected, right click the block to customise it");
         plugin.getLogger().log(Level.ALL, "Player " + p.getDisplayName() + " (" + p.getUniqueId().toString() + ") placed a region at x:" + rLoc.getX() + " z:" + rLoc.getZ());
     }
-
-    @EventHandler
-    public void onRightClickBlock(PlayerInteractEvent evt) {
-        if(evt.getHand() != EquipmentSlot.HAND && evt.getAction() != Action.LEFT_CLICK_BLOCK) return;
-
-        Region region = Intrinsic.getRegionContainer().getRegionAt(evt.getClickedBlock().getLocation());
-
-        if(region == null) return;
-
-        evt.getPlayer().sendMessage("You have clicked a region at " + region.getLocation().toString());
-        region.visualize();
-        evt.setCancelled(true);
-    }
 }

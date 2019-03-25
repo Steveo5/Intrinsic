@@ -16,23 +16,27 @@ public class MenuBuilder {
     private String title;
     private Inventory inv;
     private HashMap<Integer, Button> buttons;
+    private String name;
 
-    public MenuBuilder() {
+    public MenuBuilder(String name) {
+        this.name = name;
         buttons = new HashMap<>();
     }
 
     /**
      * Get the inventory created by this menu builder
-     * @return
+     * @return the Bukkit Inventory object
      */
     public Inventory getInventory() {
         return inv;
     }
 
+    public String getName() { return name; }
+
     /**
      * Set the inventory size for this menu
-     * @param size
-     * @return
+     * @param size of the Inventory for this menu, must be in increments of 9
+     * @return reference to self
      */
     public MenuBuilder size(int size) {
         this.size = size;
@@ -41,7 +45,7 @@ public class MenuBuilder {
 
     /**
      * Get the inventory size
-     * @return
+     * @return int size of inventory
      */
     public int size() {
         return size;
@@ -49,8 +53,8 @@ public class MenuBuilder {
 
     /**
      * Set the title for this menu/inventory
-     * @param title
-     * @return
+     * @param title displayed when this inventory is opened
+     * @return reference to self
      */
     public MenuBuilder title(String title) {
         this.title = title;
@@ -59,7 +63,7 @@ public class MenuBuilder {
 
     /**
      * Gets the title of the inventory
-     * @return
+     * @return String title of this inventory
      */
     public String title() {
         return title;
@@ -67,9 +71,9 @@ public class MenuBuilder {
 
     /**
      * Add a button to the menu at the specified position
-     * @param position
-     * @param button
-     * @return
+     * @param position corresponding to the actual inventory position
+     * @param button to place at this specific position
+     * @return reference to self
      */
     public MenuBuilder button(int position, Button button) {
         buttons.put(position, button);
@@ -124,16 +128,17 @@ public class MenuBuilder {
 
     /**
      * Show the inventory for a player
-     * @param player
+     * @param player to show this menu for
      */
     public void show(Player player) {
         build();
         update();
-        List<Button> buttonList = new ArrayList<Button>(buttons.values());
+        List<Button> buttonList = new ArrayList<>(buttons.values());
 
         // Call the onEnable listener
         for(Button b : buttonList) {
-            for(ButtonListener listener : b.getListeners()) if(b.hasListener()) listener.onEnable(b, player);
+            for(ButtonListener listener : b.getListeners())
+                if(b.hasListener()) listener.onEnable(b, player);
         }
 
         // Listen for events in this menu
@@ -147,5 +152,35 @@ public class MenuBuilder {
 
         // Populate the inventory with buttons
         for(Button b : buttons.values()) inv.setItem(b.getPosition(), b.getIcon());
+    }
+
+    /**
+     * Get all the ButtonListeners for all buttons in this MenuBuilder
+     * @return list of ButtonListeners
+     */
+    public List<ButtonListener> getListeners() {
+        List<ButtonListener> listeners = new ArrayList<>();
+
+        // Sort the ButtonListeners into InputListeners
+        for (Button btn : getButtons()) {
+            if (!btn.hasListener()) continue;
+            listeners.addAll(btn.getListeners());
+        }
+
+        return listeners;
+    }
+
+    /**
+     * Get all ButtonListeners for every MenuBuilders buttons
+     * @return list of ButtonListeners
+     */
+    public static List<ButtonListener> getAllInputListeners() {
+        List<ButtonListener> listeners = new ArrayList<>();
+
+        for(MenuBuilder menuBuilder : MenuBuilderListener.getMenus()) {
+            listeners.addAll(menuBuilder.getListeners());
+        }
+
+        return listeners;
     }
 }

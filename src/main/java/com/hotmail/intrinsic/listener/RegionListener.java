@@ -16,6 +16,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.Collection;
 
@@ -79,5 +80,17 @@ public class RegionListener implements Listener {
 
     public void onPlayerLeaveRegions(PlayerMoveEvent evt, Collection<Region> regions) {
 
+    }
+
+    @EventHandler
+    public void onRightClickBlock(PlayerInteractEvent evt) {
+        if(evt.getHand() != EquipmentSlot.HAND && evt.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        Region region = Intrinsic.getRegionContainer().getRegionAt(evt.getClickedBlock().getLocation());
+
+        if(region == null) return;
+
+        Intrinsic.getMenus().get("main-menu").show(evt.getPlayer());
+        evt.setCancelled(true);
     }
 }

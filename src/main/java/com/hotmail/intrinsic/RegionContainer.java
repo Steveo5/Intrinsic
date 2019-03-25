@@ -2,14 +2,11 @@ package com.hotmail.intrinsic;
 
 import com.hotmail.intrinsic.event.RegionCreateEvent;
 import com.hotmail.intrinsic.event.RegionLoadEvent;
-import com.hotmail.intrinsic.exception.RegionLoadException;
-import com.hotmail.intrinsic.util.CuboidUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventException;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,9 +20,9 @@ public class RegionContainer {
 
     /**
      * Load a region into the region container
-     * @param region
+     * @param region specific region to load
      * @return true if loaded or false if the region is already loaded or
-     * the event is canelled
+     * the event is cancelled
      */
     public boolean loadRegion(Region region) {
         if(this.regions.containsKey(region.getId())) return false;
@@ -46,7 +43,8 @@ public class RegionContainer {
     /**
      * Load all regions in a list, ignoring those that return false
      * or fail to load
-     * @param regions
+     * @param regions all of the regions to load at once, no return value so
+     * if you want to see which ones were loaded it would be best to load them individually
      */
     public void loadRegions(Collection<Region> regions) {
         for (Region r : regions) loadRegion(r);
@@ -67,10 +65,10 @@ public class RegionContainer {
      * Create a new region at a specific location, will throw an exception if the
      * region create event is cancelled, failed to load region or failed to save
      * region to database
-     * @param type
-     * @param loc
-     * @param owner
-     * @return
+     * @param type the basic parameters for this region
+     * @param loc where the center block was placed
+     * @param owner player who placed this region down
+     * @return an object reference of the region that was created
      */
     public Region createRegion(RegionType type, Location loc, Player owner) {
 
@@ -98,7 +96,7 @@ public class RegionContainer {
 
     /**
      * Unload and destroy a region
-     * @param region
+     * @param region to specifically unload and delete from the database
      */
     public void destroyRegion(Region region) {
         region.unload();
@@ -123,22 +121,23 @@ public class RegionContainer {
     /**
      * Check if a player has permission to do an action at the
      * specified location
-     * @param chunk
-     * @param player
-     * @return
+     * @param chunk to check if the player can build at
+     * @param player to check permissions for
+     * @return boolean true if they have permission at the highest
+     * priority region in the chunk
      */
     public boolean hasPermission(Chunk chunk, Player player) {
         RegionSet rs = Intrinsic.getRegionContainer().getIntersecting(chunk);
 
         if(rs.all().size() < 1) return true;
-        if(rs.hasPermission(player.getUniqueId())) return true;
 
-        return false;
+        return rs.hasPermission(player.getUniqueId());
+
     }
 
     /**
      * Get a region at a specific location
-     * @param location
+     * @param location to get a region at
      * @return null if no region found
      */
     public Region getRegionAt(Location location) {
