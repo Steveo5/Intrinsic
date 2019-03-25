@@ -1,7 +1,7 @@
 log-file-size: 200000000
 
 visualization:
-  time: 1000
+  time-in-seconds: 10
 
 storage:
   mysql:

@@ -21,7 +21,7 @@ public class RegionSet {
 
     public Region highestPriority() {
         if(regionSet.isEmpty()) return null;
-        return this.regionSet.get(this.regionSet.size() - 1);
+        return all().get(this.regionSet.size() - 1);
     }
 
     /**
@@ -38,7 +38,7 @@ public class RegionSet {
 
     public boolean hasPermission(UUID uuid) {
         Region highest = highestPriority();
-        return highest != null && (highest.isOwner(uuid) || highest.isWhitelisted(uuid));
+        return highest != null && highest.hasPermission(uuid);
     }
 
 }

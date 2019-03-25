@@ -1,8 +1,12 @@
 package com.hotmail.intrinsic.listener;
 
+import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
+import com.hotmail.intrinsic.RegionSet;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -19,17 +23,29 @@ public class RegionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent evt) {
+        if(Intrinsic.getRegionContainer().hasPermission(evt.getBlock().getChunk(), evt.getPlayer())) return;
 
+        evt.getPlayer().sendMessage(ChatColor.RED + "This area is protected");
+        evt.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent evt) {
+        if(Intrinsic.getRegionContainer().hasPermission(evt.getBlock().getChunk(), evt.getPlayer())) return;
 
+        evt.getPlayer().sendMessage(ChatColor.RED + "This area is protected");
+        evt.setCancelled(true);
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent evt) {
+        if(!(evt.getDamager() instanceof Player)) return;
 
+        Player p = (Player)evt.getDamager();
+        if(Intrinsic.getRegionContainer().hasPermission(evt.getEntity().getLocation().getChunk(), p)) return;
+
+        p.sendMessage(ChatColor.RED + "This area is protected");
+        evt.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -44,7 +60,10 @@ public class RegionListener implements Listener {
     }
 
     public void onPlayerInteractChest(PlayerInteractEvent evt) {
+        if(Intrinsic.getRegionContainer().hasPermission(evt.getClickedBlock().getChunk(), evt.getPlayer())) return;
 
+        evt.getPlayer().sendMessage(ChatColor.RED + "This area is protected");
+        evt.setCancelled(true);
     }
 
     @EventHandler

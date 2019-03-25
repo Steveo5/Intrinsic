@@ -44,7 +44,7 @@ public class Region {
         return this.owner;
     }
 
-    public boolean isOwner(UUID uuid) { return uuid.equals(owner); }
+    public boolean isOwner(UUID uuid) { return uuid.equals(owner.getUniqueId()); }
 
     public List<UUID> getWhitelist() { return this.whitelist; }
 
@@ -60,6 +60,10 @@ public class Region {
 
     public Location getLocation() { return this.loc; }
 
+    public boolean hasPermission(UUID uuid) {
+        return isOwner(uuid) || isWhitelisted(uuid);
+    }
+
     /**
      * Unique id for this region
      * @return
@@ -72,11 +76,11 @@ public class Region {
      * Visibly show the region in the world
      */
     public void visualize() {
-        Intrinsic.getVisualizer().show(this, Intrinsic.getIntrinsicConfig().getLong("visualization.time"));
+        visualize(Intrinsic.getIntrinsicConfig().getLong("visualization.time-in-seconds") * 20L);
     }
 
-    public void visualize(long ms) {
-        Intrinsic.getVisualizer().show(this, ms);
+    public void visualize(long ticks) {
+        Intrinsic.getVisualizer().show(this, ticks);
     }
 
     /**
@@ -136,6 +140,8 @@ public class Region {
 
     public void setPriority(int priority) {
         this.priority = priority;
+
+        Intrinsic.getStorage().saveRegion(this);
     }
 
     /**

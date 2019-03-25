@@ -121,6 +121,22 @@ public class RegionContainer {
     }
 
     /**
+     * Check if a player has permission to do an action at the
+     * specified location
+     * @param chunk
+     * @param player
+     * @return
+     */
+    public boolean hasPermission(Chunk chunk, Player player) {
+        RegionSet rs = Intrinsic.getRegionContainer().getIntersecting(chunk);
+
+        if(rs.all().size() < 1) return true;
+        if(rs.hasPermission(player.getUniqueId())) return true;
+
+        return false;
+    }
+
+    /**
      * Get a region at a specific location
      * @param location
      * @return null if no region found
