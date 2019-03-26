@@ -90,6 +90,7 @@ public class RegionListener implements Listener {
 
         if(region == null) return;
 
+        Intrinsic.adapt(evt.getPlayer()).setLastViewed(region);
         Intrinsic.getMenus().get("main-menu").show(evt.getPlayer());
         evt.setCancelled(true);
     }

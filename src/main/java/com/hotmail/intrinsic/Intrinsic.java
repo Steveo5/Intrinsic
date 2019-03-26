@@ -1,14 +1,12 @@
 package com.hotmail.intrinsic;
 
-import com.hotmail.intrinsic.listener.RegionCreateListener;
-import com.hotmail.intrinsic.listener.RegionDestroyListener;
-import com.hotmail.intrinsic.listener.RegionListener;
-import com.hotmail.intrinsic.listener.RegionLoadListener;
+import com.hotmail.intrinsic.listener.*;
 import com.hotmail.intrinsic.menubuilder.MenuBuilder;
 import com.hotmail.intrinsic.menubuilder.MenuBuilderListener;
 import com.hotmail.intrinsic.storage.MysqlConnector;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.*;
@@ -32,6 +31,7 @@ public class Intrinsic extends JavaPlugin {
     private static RegionContainer regionContainer;
     private static MysqlConnector storage;
     private static Visualizer visualizer;
+    protected static HashMap<String, IntrinsicPlayer> intrinsicPlayers = new HashMap<>();
 
     private static HashMap<String, MenuBuilder> menus = new HashMap<>();
 
@@ -56,6 +56,7 @@ public class Intrinsic extends JavaPlugin {
         getPluginManager().registerEvents(new RegionLoadListener(), this);
         getPluginManager().registerEvents(new RegionDestroyListener(), this);
         getPluginManager().registerEvents(new RegionListener(), this);
+        getPluginManager().registerEvents(new PlayerListener(), this);
         new MenuBuilderListener(this);
 
         try {
@@ -65,6 +66,7 @@ public class Intrinsic extends JavaPlugin {
         }
 
         loadMenu(new MainMenu("main-menu"));
+        loadMenu(new WhitelistMenu("whitelist-menu"));
     }
 
     @Override
@@ -156,6 +158,26 @@ public class Intrinsic extends JavaPlugin {
 
     public static HashMap<String, MenuBuilder> getMenus() {
         return menus;
+    }
+
+    public static IntrinsicPlayer adapt(Player player) {
+        // Wrap the player with an IntrinsicPlayer
+        for(IntrinsicPlayer iPlayer : getOnlineIntrinsicPlayers())
+            if(iPlayer.getBase().getUniqueId().equals(player.getUniqueId())) return iPlayer;
+
+        return new IntrinsicPlayer(player);
+    }
+
+    public static Collection<IntrinsicPlayer> getOnlineIntrinsicPlayers() {
+        return intrinsicPlayers.values();
+    }
+
+    public static void addOnlineIntrinsicPlayer(IntrinsicPlayer player) {
+        intrinsicPlayers.put(player.getBase().getUniqueId().toString(), player);
+    }
+
+    public static void removeIntrinsicPlayer(IntrinsicPlayer player) {
+        intrinsicPlayers.remove(player.getBase().getUniqueId().toString());
     }
 
 }

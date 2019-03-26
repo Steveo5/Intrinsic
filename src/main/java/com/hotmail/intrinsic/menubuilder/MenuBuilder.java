@@ -71,17 +71,16 @@ public class MenuBuilder {
 
     /**
      * Add a button to the menu at the specified position
-     * @param position corresponding to the actual inventory position
      * @param button to place at this specific position
      * @return reference to self
      */
-    public MenuBuilder button(int position, Button button) {
-        buttons.put(position, button);
+    public MenuBuilder button(Button button) {
+        buttons.put(button.getPosition(), button);
         return this;
     }
 
-    public MenuBuilder button(int position, Button button, ButtonListener listener) {
-        button(position, button);
+    public MenuBuilder button(Button button, ButtonListener listener) {
+        button(button);
         button.addListener(listener);
         return this;
     }
@@ -174,7 +173,7 @@ public class MenuBuilder {
      * Get all ButtonListeners for every MenuBuilders buttons
      * @return list of ButtonListeners
      */
-    public static List<ButtonListener> getAllInputListeners() {
+    public static List<ButtonListener> getAllButtonListeners() {
         List<ButtonListener> listeners = new ArrayList<>();
 
         for(MenuBuilder menuBuilder : MenuBuilderListener.getMenus()) {

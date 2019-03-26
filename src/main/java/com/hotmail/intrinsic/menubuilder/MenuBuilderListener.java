@@ -55,7 +55,7 @@ public class MenuBuilderListener implements Listener {
     public void onMessage(AsyncPlayerChatEvent evt) {
         synchronized (menus) {
             // Check if any button is waiting input
-            for(ButtonListener buttonListener : MenuBuilder.getAllInputListeners()) {
+            for(ButtonListener buttonListener : MenuBuilder.getAllButtonListeners()) {
                 if (!(buttonListener instanceof InputListener)) continue;
                 InputListener inputListener = (InputListener) buttonListener;
 
