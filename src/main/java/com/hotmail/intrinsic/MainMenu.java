@@ -13,16 +13,7 @@ public class MainMenu extends MenuBuilder {
 
         title("Dashboard").size(9);
 
-        button(new Button(1, Material.ENDER_EYE, "") {
-            @Override
-            public void onClick(Button button, Player player) {
-                Intrinsic.adapt(player).getLastViewed().visualize();
-                player.sendMessage(ChatColor.GREEN + "Showing region boundary");
-                player.closeInventory();
-            }
-        });
-
-        button(new Button(2, Material.ENDER_EYE, "Show boundary") {
+        button(new Button(0, Material.ENDER_EYE, "&3Show boundary") {
             @Override
             public void onClick(Button button, Player player) {
                 Intrinsic.adapt(player).getLastViewed().visualize();
@@ -31,14 +22,14 @@ public class MainMenu extends MenuBuilder {
             }
         });
 
-        button(new Button(3, Material.PAPER, "Whitelist") {
+        button(new Button(1, Material.PAPER, "&3Whitelist") {
             @Override
             public void onClick(Button button, Player player) {
                 Intrinsic.getMenus().get("whitelist-menu").show(player);
             }
         });
 
-        button(new Button(9, Material.BARRIER, "Close") {
+        button(new Button(8, Material.BARRIER, "&3Close") {
             @Override
             public void onClick(Button button, Player player) {
                 player.closeInventory();
