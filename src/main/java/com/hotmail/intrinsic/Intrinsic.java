@@ -4,10 +4,13 @@ import com.hotmail.intrinsic.listener.*;
 import com.hotmail.intrinsic.menubuilder.MenuBuilder;
 import com.hotmail.intrinsic.menubuilder.MenuBuilderListener;
 import com.hotmail.intrinsic.storage.MysqlConnector;
+import com.hotmail.intrinsic.util.StringUtil;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -49,8 +52,8 @@ public class Intrinsic extends JavaPlugin {
             getLogger().log(Level.INFO, "MySQL Connection succeeded!");
         }
 
-        RegionType small = new RegionType("small-protection", Material.WHITE_BANNER, 0);
-        regionTypes.add(small);
+        loadRegionTypes();
+        getLogger().log(Level.ALL, regionTypes.size() + " total regions have been loaded");
 
         getPluginManager().registerEvents(new RegionCreateListener(this), this);
         getPluginManager().registerEvents(new RegionLoadListener(), this);
@@ -72,6 +75,26 @@ public class Intrinsic extends JavaPlugin {
     @Override
     public void onDisable() {
         storage.onDisable();
+    }
+
+    private void loadRegionTypes() {
+        for(String regionName : cfg.getConfigurationSection("region-types").getKeys(false)) {
+            ConfigurationSection regionSection = cfg.getConfigurationSection("region-types." + regionName);
+            Material material = Material.valueOf(regionSection.getString("material").toUpperCase());
+            int radius = regionSection.getInt("radius");
+
+            ItemStack item = new ItemStack(material);
+            ItemMeta im = item.getItemMeta();
+
+            if(regionSection.contains("name")) im.setDisplayName(StringUtil.colorize(regionSection.getString("name")));
+            if(regionSection.contains("lore")) im.setLore(StringUtil.listFromString(regionSection.getString("lore")));
+
+            item.setItemMeta(im);
+
+            RegionType regionType = new RegionType(regionName, item, radius);
+
+            regionTypes.add(regionType);
+        }
     }
 
     public static List<RegionType> getRegionTypes() {

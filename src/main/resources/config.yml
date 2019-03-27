@@ -1,3 +1,20 @@
+region-types:
+  small:
+    material: white_banner
+    radius: 0
+    name: '&3Small protection'
+    lore: 'Protect a single chunk|from grief'
+  medium:
+    material: blue_banner
+    radius: 0
+    name: '&3Medium protection'
+    lore: 'Protect a 1 chunk area|from grief'
+  large:
+    material: purple_banner
+    radius: 0
+    name: '&3Large protection'
+    lore: 'Protect a 2 chunk area|from grief'
+
 log-file-size: 200000000
 
 visualization:

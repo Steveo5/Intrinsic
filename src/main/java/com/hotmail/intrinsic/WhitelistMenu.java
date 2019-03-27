@@ -45,7 +45,7 @@ public class WhitelistMenu extends MenuBuilder {
         for(int i=0 ; i < iPlayer.getLastViewed().getWhitelist().size() ; i++) {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(iPlayer.getLastViewed().getWhitelist().get(i));
 
-            Button btn = new Button(i, Material.SKELETON_SKULL, offlinePlayer.getName(), "Click to remove") {
+            Button btn = new Button(i, Material.SKELETON_SKULL, offlinePlayer.getName(), "&3&lClick to remove") {
                 @Override
                 public void onClick(Button button, Player player) {
                     Intrinsic.adapt(player).getLastViewed().removeWhitelisted(UUID.fromString(data().get(0)));

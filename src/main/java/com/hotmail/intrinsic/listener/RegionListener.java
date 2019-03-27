@@ -2,7 +2,8 @@ package com.hotmail.intrinsic.listener;
 
 import com.hotmail.intrinsic.Intrinsic;
 import com.hotmail.intrinsic.Region;
-import com.hotmail.intrinsic.RegionSet;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -72,6 +73,16 @@ public class RegionListener implements Listener {
         Chunk from = evt.getFrom().getChunk();
         Chunk to = evt.getTo().getChunk();
 
+        if(from.getX() == to.getX() && from.getX() == to.getZ()) return;
+
+        Region toRegion = Intrinsic.getRegionContainer().getIntersecting(to).highestPriority();
+        if(toRegion == null) return;
+
+        evt.getPlayer().spigot().sendMessage(
+                ChatMessageType.ACTION_BAR, new TextComponent(
+                        ChatColor.GREEN + "You have entered " + toRegion.getOwner().getName() + "s protection"
+                )
+        );
     }
 
     public void onPlayerEnterRegions(PlayerMoveEvent evt, Collection<Region> regions) {
@@ -89,6 +100,10 @@ public class RegionListener implements Listener {
         Region region = Intrinsic.getRegionContainer().getRegionAt(evt.getClickedBlock().getLocation());
 
         if(region == null) return;
+        if(!region.getOwner().equals(evt.getPlayer())) {
+            evt.getPlayer().sendMessage(ChatColor.RED + "You do not own this region");
+            evt.setCancelled(true);
+        }
 
         Intrinsic.adapt(evt.getPlayer()).setLastViewed(region);
         Intrinsic.getMenus().get("main-menu").show(evt.getPlayer());

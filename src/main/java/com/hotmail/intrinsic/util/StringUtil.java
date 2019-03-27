@@ -5,6 +5,10 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class StringUtil {
     public static String colorize(String str) {
         return ChatColor.translateAlternateColorCodes('&', str);
@@ -16,5 +20,10 @@ public class StringUtil {
         im.setDisplayName(colorize(title));
         item.setItemMeta(im);
         return item;
+    }
+
+    public static List<String> listFromString(String str) {
+        str = colorize(str);
+        return Arrays.asList(str.split("\\|"));
     }
 }

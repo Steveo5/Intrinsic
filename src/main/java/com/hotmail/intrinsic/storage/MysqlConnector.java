@@ -173,7 +173,7 @@ public class MysqlConnector {
     }
 
     public void saveWhitelist(String regionId, List<UUID> whitelist) {
-        String sql = "INSERT IGNORE (uuid, region_id) VALUES (?, ?);";
+        String sql = "INSERT IGNORE INTO whitelist (uuid, region_id) VALUES (?, ?);";
 
         try {
             Connection connection = pool.getConnection();
