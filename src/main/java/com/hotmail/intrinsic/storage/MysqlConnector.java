@@ -52,6 +52,7 @@ public class MysqlConnector {
         final int maxX = region.getBounds()[1].getX();
         final int maxZ = region.getBounds()[1].getZ();
         final String world = loc.getWorld().getUID().toString();
+        final List<UUID> whitelist = region.getWhitelist();
 
         // Serialise the item
         YamlConfiguration itemConfig = new YamlConfiguration();
@@ -75,6 +76,7 @@ public class MysqlConnector {
 
                 this.saveRegionLocation(id, x, y, z, minX, minZ, maxX, maxZ, world);
                 this.saveRegionType(id, typeName, radius, serializedItem);
+                this.saveWhitelist(id, whitelist);
 
                 /** Create the region **/
                 insertRegionStatement = pool.getConnection().prepareStatement(insertRegion);
@@ -170,6 +172,25 @@ public class MysqlConnector {
         pool.close(connection, insertLocationStatement, null);
     }
 
+    public void saveWhitelist(String regionId, List<UUID> whitelist) {
+        String sql = "INSERT IGNORE (uuid, region_id) VALUES (?, ?);";
+
+        try {
+            Connection connection = pool.getConnection();
+
+            for (UUID uuid : whitelist) {
+                PreparedStatement statement = connection.prepareStatement(sql);
+                statement.setString(1, uuid.toString());
+                statement.setString(2, regionId);
+                statement.execute();
+                statement.close();
+            }
+            pool.close(connection, null, null);
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     /**
      * Get regions intersecting a chunk and populate a callback ASync
      * @param chunk
@@ -242,6 +263,7 @@ public class MysqlConnector {
             values.put("centerY", results.getString(3));
             values.put("centerZ", results.getString(4));
             values.put("chunkWorld", results.getString(9));
+            values.put("regionId", results.getString(10));
             values.put("owner", results.getString(11));
             values.put("createdAt", results.getString(12));
             values.put("priority", results.getString(13));
@@ -291,10 +313,45 @@ public class MysqlConnector {
         final ItemStack typeItem = restoreConfig.getItemStack("item");
 
         RegionType regionType = new RegionType(map.get("typeName"), typeItem, Integer.valueOf(map.get("radius")));
+        List<UUID> whitelist = getWhitelist(map.get("regionId"));
+        int priority = Integer.valueOf(map.get("priority"));
 
         // Finally make our region
-        return new Region(regionType, loc, offlineOwner, Integer.valueOf(map.get("priority")));
+        return new Region(regionType, loc, offlineOwner, priority, whitelist);
 
+    }
+
+    /**
+     * Get all whitelisted UUIDs for a specific region id
+     * @param regionId
+     * @return
+     */
+    private List<UUID> getWhitelist(String regionId) {
+        List<UUID> whitelist = new ArrayList<>();
+
+        PreparedStatement statement = null;
+        Connection connection = null;
+        ResultSet rs = null;
+        String sql = "SELECT * FROM whitelist WHERE region_id LIKE ?";
+
+        try {
+            connection = pool.getConnection();
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, regionId);
+
+            rs = statement.executeQuery();
+
+            while(rs.next()) {
+                UUID uuid = UUID.fromString(rs.getString(1));
+                whitelist.add(uuid);
+            }
+        } catch(SQLException e) {
+            return whitelist;
+        } finally {
+            pool.close(connection, statement, rs);
+        }
+
+        return whitelist;
     }
 
     /**
@@ -362,14 +419,12 @@ public class MysqlConnector {
         try {
             pool.getConnection();
             return true;
-        } catch (SQLException e) { }
-
-        return false;
+        } catch (SQLException e) { return false; }
     }
 
     public void initialiseTables() {
         Connection connection = null;
-        Statement statement = null;
+        Statement statement;
         try {
             connection = pool.getConnection();
             statement = connection.createStatement();
@@ -399,9 +454,15 @@ public class MysqlConnector {
             regionsTableQuery += "priority INT NOT NULL,";
             regionsTableQuery += "PRIMARY KEY (id));";
 
+            String whitelistTableQuery = "CREATE TABLE IF NOT EXISTS whitelist (";
+            whitelistTableQuery += "uuid VARCHAR(255) NOT NULL,";
+            whitelistTableQuery += "region_id VARCHAR(255) NOT NULL,";
+            whitelistTableQuery += "PRIMARY KEY (uuid, region_id));";
+
             statement.execute(locationsTableQuery);
             statement.execute(typesTableQuery);
             statement.execute(regionsTableQuery);
+            statement.execute(whitelistTableQuery);
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {

@@ -15,6 +15,7 @@ public class Button {
     private int position;
     private ItemStack item;
     private List<ButtonListener> listeners;
+    private List<String> data = new ArrayList<>();
 
     public Button(int position, ItemStack icon) {
         this.position = position;
@@ -37,6 +38,12 @@ public class Button {
         this(position, StringUtil.itemFromString(material, itemTitle));
     }
 
+    public Button(int position, Material material, String itemTitle, String lore) {
+        this(position, StringUtil.itemFromString(material, itemTitle));
+
+        lore(lore);
+    }
+
     /**
      * Sets the buttons icon title
      * @param title
@@ -47,6 +54,16 @@ public class Button {
         im.setDisplayName(StringUtil.colorize(title));
         item.setItemMeta(im);
         return this;
+    }
+
+    public Button data(String str) {
+        this.data.add(str);
+
+        return this;
+    }
+
+    public List<String> data() {
+        return data;
     }
 
     /**

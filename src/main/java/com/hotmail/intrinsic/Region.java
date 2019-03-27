@@ -20,13 +20,14 @@ public class Region {
 
     private long visualizingTimeFor, visualizingTimeLeft;
 
-    public Region(RegionType type, Location loc, OfflinePlayer owner, int priority) {
+    public Region(RegionType type, Location loc, OfflinePlayer owner, int priority, List<UUID> whitelist) {
         this.type = type;
         this.loc = loc;
         this.center = loc.getChunk();
         this.owner = owner;
         this.priority = priority;
-        this.borderBlocks = new ArrayList<Block>();
+        this.borderBlocks = new ArrayList<>();
+        this.whitelist = whitelist;
 
         bounds[0] = center.getWorld().getChunkAt(center.getX() - type.getRadius(), center.getZ() - type.getRadius());
         bounds[1] = center.getWorld().getChunkAt(center.getX() + type.getRadius(), center.getZ() + type.getRadius());
@@ -49,6 +50,17 @@ public class Region {
     public List<UUID> getWhitelist() { return this.whitelist; }
 
     public boolean isWhitelisted(UUID uuid) { return this.whitelist.contains(uuid); }
+
+    public void removeWhitelisted(UUID uuid) {
+        whitelist.remove(uuid);
+
+        Intrinsic.getStorage().saveWhitelist(this.getId(), whitelist);
+    }
+
+    public void addWhitelist(UUID uuid) {
+        this.whitelist.add(uuid);
+        Intrinsic.getStorage().saveWhitelist(this.getId(), this.whitelist);
+    }
 
     public String getDisplayName() {
         return type.getName().replace("-", " ");

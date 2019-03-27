@@ -13,7 +13,7 @@ public class StringUtil {
     public static ItemStack itemFromString(Material material, String title) {
         ItemStack item = new ItemStack(material);
         ItemMeta im = item.getItemMeta();
-        im.setDisplayName(title);
+        im.setDisplayName(colorize(title));
         item.setItemMeta(im);
         return item;
     }

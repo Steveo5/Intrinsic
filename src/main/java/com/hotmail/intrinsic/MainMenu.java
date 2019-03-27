@@ -5,7 +5,6 @@ import com.hotmail.intrinsic.menubuilder.MenuBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 public class MainMenu extends MenuBuilder {
     public MainMenu(String name) {
