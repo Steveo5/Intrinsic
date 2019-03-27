@@ -2,3 +2,5 @@ name: Intrinsic
 version: 1.0
 main: com.hotmail.intrinsic.Intrinsic
 api-version: 1.13
+commands:
+  intrinsic:

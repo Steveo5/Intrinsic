@@ -61,6 +61,7 @@ public class Intrinsic extends JavaPlugin {
         getPluginManager().registerEvents(new RegionListener(), this);
         getPluginManager().registerEvents(new PlayerListener(), this);
         new MenuBuilderListener(this);
+        this.getCommand("intrinsic").setExecutor(new CommandListener(this));
 
         try {
             setupLogger();
@@ -201,6 +202,15 @@ public class Intrinsic extends JavaPlugin {
 
     public static void removeIntrinsicPlayer(IntrinsicPlayer player) {
         intrinsicPlayers.remove(player.getBase().getUniqueId().toString());
+    }
+
+    /**
+     * Reload the config and load everything new again
+     */
+    public void reload() {
+        this.reloadConfig();
+        regionTypes.clear();
+        loadRegionTypes();
     }
 
 }
