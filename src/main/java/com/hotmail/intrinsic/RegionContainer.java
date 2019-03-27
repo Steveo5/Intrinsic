@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -78,7 +79,7 @@ public class RegionContainer {
         Region highest = Intrinsic.getRegionContainer().getIntersecting(loc.getChunk()).highestPriority();
         int highestPriority = highest == null ? 1 : highest.getPriority() + 1;
 
-        Region region = new Region(type, loc, p, highestPriority);
+        Region region = new Region(type, loc, p, highestPriority, new ArrayList<>());
 
         // Create the event here
         RegionCreateEvent event = new RegionCreateEvent(region);
